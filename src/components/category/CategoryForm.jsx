@@ -11,8 +11,8 @@ import { toast } from "react-hot-toast";
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   parentId: z
-    .string()
-    .optional()
+    .number()
+    .nullable()
     .transform((val) => (val === "" ? null : Number(val))),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -30,26 +30,19 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
     setValue,
     reset,
   } = useForm({
+    defaultValues: {
+      name: "",
+      parentId: null,
+      description: "",
+      isActive: true,
+      sortOrder: 0,
+    },
     resolver: zodResolver(categorySchema),
-    defaultValues: category
-      ? {
-        name: category.name,
-        parentId: category.parentId?.toString() || "",
-        description: category.description || "",
-        isActive: category.isActive,
-        sortOrder: category.sortOrder,
-      }
-      : {
-        name: "",
-        parentId: null,
-        description: "",
-        isActive: true,
-        sortOrder: 0,
-      },
   });
 
   const onFormSubmit = async (data) => {
     try {
+      setIsLoading(true);
       console.log("data", data);
       console.log("category", category);
       if (category) {
@@ -70,11 +63,17 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
       toast.error(error.data?.message || "Error submitting category");
     } finally {
       console.log("finally");
+      setIsLoading(false);
     }
+  };
+
+  const onSubmitError = (errors) => {
+    console.log("errors", errors);
   };
 
   useEffect(() => {
     if (category && category.id) {
+      console.log("category", category);
       reset(category);
     } else {
       setValue("name", "");
@@ -84,6 +83,7 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
       setValue("sortOrder", 0);
     }
   }, [category]);
+
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
@@ -98,7 +98,7 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onFormSubmit, onSubmitError)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="name">
             Name <span className="text-red-500">*</span>
@@ -123,7 +123,7 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
           <select
             id="parentId"
             className="form-select w-full"
-            {...register("parentId")}
+            {...register("parentId", { setValueAs: (value) => value === "" || value === null ? null : Number(value) })}
           >
             <option value="">None</option>
             {parentCategories.map((parent) => (

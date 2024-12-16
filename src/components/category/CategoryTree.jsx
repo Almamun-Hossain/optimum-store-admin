@@ -30,9 +30,8 @@ const CategoryItem = ({ category, level = 0, onDrop, onEdit }) => {
     <div ref={drop}>
       <div
         ref={drag}
-        className={`flex items-center p-2 ${isDragging ? "opacity-50" : ""} ${
-          isOver ? "bg-violet-100 dark:bg-violet-900/20" : ""
-        } hover:bg-gray-50 dark:hover:bg-gray-700/20 rounded-lg cursor-move`}
+        className={`flex items-center p-2 ${isDragging ? "opacity-50" : ""} ${isOver ? "bg-violet-100 dark:bg-violet-900/20" : ""
+          } hover:bg-gray-50 dark:hover:bg-gray-700/20 rounded-lg cursor-move`}
         style={{ marginLeft: `${level * 1.5}rem` }}
       >
         {hasChildren && (

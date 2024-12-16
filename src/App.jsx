@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
@@ -8,9 +8,11 @@ import "./charts/ChartjsConfig";
 
 // Import pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
-import SignIn from "./pages/SignIn";
-import ProtectedRoute from "./components/ProtectedRoute";
-import CategoryPage from "./pages/CategoryPage";
+const SignIn = React.lazy(() => import("./pages/SignIn"));
+const ProtectedRoute = React.lazy(() => import("./components/ProtectedRoute"));
+const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
+const ProductsPage = React.lazy(() => import("./pages/ProductsPage"));
+
 
 function App() {
   const location = useLocation();
@@ -23,25 +25,35 @@ function App() {
 
   return (
     <Provider store={store}>
-      <Routes>
-        <Route path="/signin" element={<SignIn />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/category"
-          element={
-            <ProtectedRoute>
-              <CategoryPage />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
+          <Route path="/signin" element={<SignIn />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/category"
+            element={
+              <ProtectedRoute>
+                <CategoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/products"
+            element={
+              <ProtectedRoute>
+                <ProductsPage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Suspense>
     </Provider>
   );
 }
