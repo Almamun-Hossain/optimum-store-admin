@@ -1,13 +1,34 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useLoginMutation } from "../store/services/authApi";
+import { useLoginMutation } from "../store/apis/authApi";
 import { setCredentials } from "../store/slices/authSlice";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+// Validation schema
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
 function SignIn() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+    resolver: zodResolver(loginSchema),
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,22 +37,27 @@ function SignIn() {
 
   const from = location.state?.from?.pathname || "/";
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
+    setIsLoading(true);
     try {
-      const result = await login({ username, password }).unwrap();
-      dispatch(setCredentials(result));
-      navigate(from, { replace: true });
+      const result = await login(data).unwrap();
+      if (result.success) {
+        dispatch(setCredentials(result.data));
+        navigate(from, { replace: true });
+      } else {
+        setError(result.message);
+      }
     } catch (err) {
-      setError("Invalid credentials");
+      setError(err?.data?.error || "Invalid credentials");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <main className="bg-white dark:bg-gray-900">
-      <div className="relative md:flex">
-        {/* Content */}
-        <div className="md:w-1/2">
+      <div className="relative">
+        <div className="w-full">
           <div className="min-h-screen h-full flex flex-col after:flex-1">
             {/* Header */}
             <div className="flex-1">
@@ -84,7 +110,7 @@ function SignIn() {
                 Welcome back! ✨
               </h1>
               {error && <div className="text-red-500 mb-4">{error}</div>}
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="space-y-4">
                   <div>
                     <label
@@ -95,11 +121,18 @@ function SignIn() {
                     </label>
                     <input
                       id="username"
-                      className="form-input w-full"
+                      className={`form-input w-full ${
+                        errors.username ? "border-red-500" : ""
+                      }`}
                       type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      {...register("username")}
+                      placeholder="Enter email or phone number"
                     />
+                    {errors.username && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.username.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -108,13 +141,45 @@ function SignIn() {
                     >
                       Password
                     </label>
-                    <input
-                      id="password"
-                      className="form-input w-full"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div className="relative">
+                      <input
+                        id="password"
+                        className={`form-input w-full ${
+                          errors.password ? "border-red-500" : ""
+                        }`}
+                        type={showPassword ? "text" : "password"}
+                        {...register("password")}
+                        placeholder="Enter password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-600"
+                      >
+                        {showPassword ? (
+                          <svg
+                            className="w-5 h-5 fill-current text-gray-400"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-5 h-5 fill-current text-gray-400"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" />
+                          </svg>
+                        )}
+                      </button>
+                      {errors.password && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.password.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-6">
@@ -128,9 +193,33 @@ function SignIn() {
                   </div>
                   <button
                     type="submit"
-                    className="btn bg-violet-500 hover:bg-violet-600 text-white ml-3"
+                    disabled={isLoading}
+                    className="btn bg-violet-500 hover:bg-violet-600 text-white ml-3 min-w-[100px] disabled:bg-violet-300"
                   >
-                    Sign In
+                    {isLoading ? (
+                      <svg
+                        className="animate-spin h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                    ) : (
+                      "Sign In"
+                    )}
                   </button>
                 </div>
               </form>
@@ -147,20 +236,6 @@ function SignIn() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Image */}
-        <div
-          className="hidden md:block absolute top-0 bottom-0 right-0 md:w-1/2"
-          aria-hidden="true"
-        >
-          <img
-            className="object-cover object-center w-full h-full"
-            src="https://preview.cruip.com/mosaic/images/auth-image.jpg"
-            width="760"
-            height="1024"
-            alt="Authentication"
-          />
         </div>
       </div>
     </main>

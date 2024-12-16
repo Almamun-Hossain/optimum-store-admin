@@ -7,14 +7,13 @@ import "./css/style.css";
 import "./charts/ChartjsConfig";
 
 // Import pages
-import Dashboard from "./pages/Dashboard";
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 import SignIn from "./pages/SignIn";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CategoryPage from "./pages/CategoryPage";
 
 function App() {
   const location = useLocation();
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-  console.log(apiBaseUrl);
 
   useEffect(() => {
     document.querySelector("html").style.scrollBehavior = "auto";
@@ -31,6 +30,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/category"
+          element={
+            <ProtectedRoute>
+              <CategoryPage />
             </ProtectedRoute>
           }
         />
