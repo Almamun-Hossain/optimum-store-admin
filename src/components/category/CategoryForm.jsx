@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,62 +7,84 @@ import {
   useUpdateCategoryMutation,
 } from "../../store/apis/categoryApi";
 import { toast } from "react-hot-toast";
+import CategorySelect from "./CategorySelect";
+import { useSelector } from "react-redux";
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
-  parentId: z
-    .number()
-    .nullable()
-    .transform((val) => (val === "" ? null : Number(val))),
+  parentId: z.union([z.string(), z.number(), z.null()]).transform((val) => {
+    if (val === "" || val === "null" || val === null) {
+      return null;
+    }
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
-  sortOrder: z.number().default(0),
+  sortOrder: z.number().min(1).default(1),
 });
 
-const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit }) => {
+const CategoryForm = React.memo(({ category, onClose, onSubmit }) => {
+  const { categories } = useSelector((state) => state.category);
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
   const [isLoading, setIsLoading] = useState(false);
+
+  const filteredCategories = useMemo(() => {
+    const filterCategoryRecursive = (categories) => {
+      return categories
+        .filter((cat) => cat.id !== category?.id)
+        .map((cat) => {
+          if (cat.children && cat.children.length > 0) {
+            return {
+              ...cat,
+              children: filterCategoryRecursive(cat.children),
+            };
+          }
+          return cat;
+        });
+    };
+
+    return filterCategoryRecursive(categories);
+  }, [categories, category]);
+
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitted },
     setValue,
     reset,
+    watch,
   } = useForm({
     defaultValues: {
       name: "",
       parentId: null,
       description: "",
       isActive: true,
-      sortOrder: 0,
+      sortOrder: 1,
     },
+    reValidateMode: "onChange",
     resolver: zodResolver(categorySchema),
   });
 
   const onFormSubmit = async (data) => {
     try {
       setIsLoading(true);
-      console.log("data", data);
-      console.log("category", category);
       if (category) {
         await updateCategory({ id: category.id, ...data }).unwrap();
-        console.log("updateCategory");
         toast.success("Category updated successfully");
       } else {
         await createCategory(data).unwrap();
-        console.log("createCategory");
         toast.success("Category created successfully");
       }
 
       onSubmit();
       reset();
     } catch (error) {
-      console.log("error", error);
       setIsLoading(false);
       toast.error(error.data?.message || "Error submitting category");
     } finally {
-      console.log("finally");
       setIsLoading(false);
     }
   };
@@ -73,17 +95,15 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
 
   useEffect(() => {
     if (category && category.id) {
-      console.log("category", category);
       reset(category);
     } else {
       setValue("name", "");
       setValue("parentId", null);
       setValue("description", "");
       setValue("isActive", true);
-      setValue("sortOrder", 0);
+      setValue("sortOrder", 1);
     }
   }, [category]);
-
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
@@ -98,7 +118,10 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onFormSubmit, onSubmitError)} className="space-y-4">
+      <form
+        onSubmit={handleSubmit(onFormSubmit, onSubmitError)}
+        className="space-y-4"
+      >
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="name">
             Name <span className="text-red-500">*</span>
@@ -120,22 +143,11 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
           <label className="block text-sm font-medium mb-1" htmlFor="parentId">
             Parent Category
           </label>
-          <select
-            id="parentId"
-            className="form-select w-full"
-            {...register("parentId", { setValueAs: (value) => value === "" || value === null ? null : Number(value) })}
-          >
-            <option value="">None</option>
-            {parentCategories.map((parent) => (
-              <option
-                key={parent.id}
-                value={parent.id}
-                disabled={category && category.id === parent.id}
-              >
-                {parent.name}
-              </option>
-            ))}
-          </select>
+          <CategorySelect
+            categories={filteredCategories}
+            value={watch("parentId")}
+            onChange={(value) => setValue("parentId", value)}
+          />
         </div>
 
         <div>
@@ -173,6 +185,7 @@ const CategoryForm = React.memo(({ category, parentCategories, onClose, onSubmit
             id="sortOrder"
             className="form-input w-full"
             type="number"
+            min={1}
             {...register("sortOrder", { valueAsNumber: true })}
           />
         </div>

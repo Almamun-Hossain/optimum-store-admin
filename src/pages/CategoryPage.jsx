@@ -5,12 +5,15 @@ import { toast } from "react-hot-toast";
 import {
   useGetCategoriesQuery,
   useMoveCategoryMutation,
+  useDeleteCategoryMutation,
 } from "../store/apis/categoryApi";
 import CategoryTree from "../components/category/CategoryTree";
 import CategoryForm from "../components/category/CategoryForm";
 import Header from "../partials/Header";
 import Sidebar from "../partials/Sidebar";
 import CategorySearch from "../components/category/CategorySearch";
+import { useSelector } from "react-redux";
+import useCategory from "../hooks/useCategory";
 
 function CategoryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,9 +21,12 @@ function CategoryPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCategories, setFilteredCategories] = useState([]);
+  const { categories } = useSelector((state) => state.category);
+  const { categoriesLoading } = useCategory();
 
-  const { data: categories, isLoading } = useGetCategoriesQuery();
   const [moveCategory] = useMoveCategoryMutation();
+  const [deleteCategory, { isLoading: isDeleting }] =
+    useDeleteCategoryMutation();
 
   useEffect(() => {
     if (!searchTerm) {
@@ -40,6 +46,22 @@ function CategoryPage() {
 
   const handleDrop = async (draggedId, targetId) => {
     try {
+      // Find the dragged category and target category
+      const draggedCategory = categories.find((cat) => cat.id === draggedId);
+      const targetCategory = categories.find((cat) => cat.id === targetId);
+
+      // Prevent dropping a parent onto its own child
+      const isTargetChildOfDragged = (target) => {
+        if (!target) return false;
+        if (target.id === draggedId) return true;
+        return target.children?.some((child) => isTargetChildOfDragged(child));
+      };
+
+      if (isTargetChildOfDragged(targetCategory)) {
+        toast.error("Cannot move a category into its own child category");
+        return;
+      }
+
       await moveCategory({ draggedId, targetId }).unwrap();
       toast.success("Category moved successfully");
     } catch (error) {
@@ -48,11 +70,17 @@ function CategoryPage() {
   };
 
   const handleEdit = (category) => {
-    // if (isFormOpen) {
-    //   setIsFormOpen(false)
-    // }
     setSelectedCategory(category);
     setIsFormOpen(true);
+  };
+
+  const handleDelete = async (categoryId) => {
+    try {
+      await deleteCategory(categoryId).unwrap();
+      toast.success("Category deleted successfully");
+    } catch (error) {
+      toast.error(error.data?.message || "Failed to delete category");
+    }
   };
 
   return (
@@ -91,7 +119,7 @@ function CategoryPage() {
               </div>
             </div>
 
-            {isLoading ? (
+            {categoriesLoading ? (
               <div className="text-center">Loading...</div>
             ) : (
               <div className="grid grid-cols-12 gap-6">
@@ -101,6 +129,8 @@ function CategoryPage() {
                       categories={filteredCategories}
                       onDrop={handleDrop}
                       onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      isDeleting={isDeleting}
                     />
                   </DndProvider>
                 </div>
@@ -109,9 +139,6 @@ function CategoryPage() {
                   <div className="col-span-full xl:col-span-4">
                     <CategoryForm
                       category={selectedCategory}
-                      parentCategories={(categories || []).filter(
-                        (c) => c.level === 0
-                      )}
                       onClose={() => {
                         setIsFormOpen(false);
                         setSelectedCategory(null);

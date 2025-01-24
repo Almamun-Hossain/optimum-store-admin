@@ -1,10 +1,25 @@
 import React from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { FaEdit, FaTrash, FaChevronRight, FaChevronDown } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrash,
+  FaChevronRight,
+  FaChevronDown,
+  FaSpinner,
+} from "react-icons/fa";
 
-const CategoryItem = ({ category, level = 0, onDrop, onEdit }) => {
+const CategoryItem = ({
+  category,
+  level = 0,
+  onDrop,
+  onEdit,
+  onDelete,
+  isDeleting,
+}) => {
   const [isExpanded, setIsExpanded] = React.useState(true);
   const hasChildren = category.children?.length > 0;
+  const hasNoChildrenAndProducts =
+    !hasChildren && category._count?.products === 0;
 
   const [{ isDragging }, drag] = useDrag({
     type: "CATEGORY",
@@ -30,8 +45,9 @@ const CategoryItem = ({ category, level = 0, onDrop, onEdit }) => {
     <div ref={drop}>
       <div
         ref={drag}
-        className={`flex items-center p-2 ${isDragging ? "opacity-50" : ""} ${isOver ? "bg-violet-100 dark:bg-violet-900/20" : ""
-          } hover:bg-gray-50 dark:hover:bg-gray-700/20 rounded-lg cursor-move`}
+        className={`flex items-center p-2 ${isDragging ? "opacity-50" : ""} ${
+          isOver ? "bg-violet-100 dark:bg-violet-900/20" : ""
+        } hover:bg-gray-50 dark:hover:bg-gray-700/20 rounded-lg cursor-move`}
         style={{ marginLeft: `${level * 1.5}rem` }}
       >
         {hasChildren && (
@@ -61,9 +77,20 @@ const CategoryItem = ({ category, level = 0, onDrop, onEdit }) => {
             onClick={() => onEdit(category)}
             className="p-1 hover:text-violet-500"
             title="Edit category"
+            disabled={isDeleting}
           >
             <FaEdit />
           </button>
+          {hasNoChildrenAndProducts && (
+            <button
+              onClick={() => onDelete(category.id)}
+              className="p-1 hover:text-red-500"
+              title="Delete category"
+              disabled={isDeleting}
+            >
+              {isDeleting ? <FaSpinner /> : <FaTrash />}
+            </button>
+          )}
         </div>
       </div>
 
@@ -76,6 +103,8 @@ const CategoryItem = ({ category, level = 0, onDrop, onEdit }) => {
               level={level + 1}
               onDrop={onDrop}
               onEdit={onEdit}
+              onDelete={onDelete}
+              isDeleting={isDeleting}
             />
           ))}
         </div>
@@ -84,19 +113,26 @@ const CategoryItem = ({ category, level = 0, onDrop, onEdit }) => {
   );
 };
 
-function CategoryTree({ categories, onDrop, onEdit }) {
+function CategoryTree({ categories, onDrop, onEdit, onDelete, isDeleting }) {
+  const renderCategoryItem = (category, level = 0) => {
+    return (
+      <CategoryItem
+        key={category.id}
+        category={category}
+        level={level}
+        onDrop={onDrop}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
+      />
+    );
+  };
+
   return (
     <div className="p-4">
       {categories
         .filter((category) => !category.parentId)
-        .map((category) => (
-          <CategoryItem
-            key={category.id}
-            category={category}
-            onDrop={onDrop}
-            onEdit={onEdit}
-          />
-        ))}
+        .map((category) => renderCategoryItem(category, 0))}
     </div>
   );
 }

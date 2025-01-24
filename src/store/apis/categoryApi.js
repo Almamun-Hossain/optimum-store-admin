@@ -7,7 +7,10 @@ export const categoryApi = createApi({
   tagTypes: ["Category"],
   endpoints: (builder) => ({
     getCategories: builder.query({
-      query: () => "/category",
+      query: (params = null) => ({
+        url: "/category",
+        params,
+      }),
       transformResponse: (response) => response.data.categories,
       providesTags: ["Category"],
     }),
@@ -33,6 +36,17 @@ export const categoryApi = createApi({
         method: "PATCH",
         body: { newParentId: targetId },
       }),
+      invalidatesTags: (result, error, { draggedId, targetId }) => [
+        { type: 'Category', id: draggedId },
+        { type: 'Category', id: targetId },
+        'Category'
+      ],
+    }),
+    deleteCategory: builder.mutation({
+      query: (id) => ({
+        url: `/category/${id}`,
+        method: "DELETE",
+      }),
       invalidatesTags: ["Category"],
     }),
   }),
@@ -43,4 +57,5 @@ export const {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useMoveCategoryMutation,
+  useDeleteCategoryMutation,
 } = categoryApi;
