@@ -6,6 +6,9 @@ import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
 import CategorySelect from "../category/CategorySelect";
 import useCategory from "../../hooks/useCategory";
+import { FaPlusCircle } from "react-icons/fa";
+import { FaRegTrashCan } from "react-icons/fa6";
+import ImageUpload from "./ImageUpload";
 
 const productSchema = z.object({
   categoryId: z.number().min(1, "Category is required"),
@@ -38,6 +41,18 @@ const productSchema = z.object({
             attributeValue: z.string().min(1, "Attribute Value is required"),
           })
         ),
+        images: z
+          .array(
+            z.object({
+              id: z.number().optional(),
+              file: z.any().optional(),
+              imageUrl: z.string().optional(),
+              altText: z.string().optional(),
+              isPrimary: z.boolean().default(false),
+              sortOrder: z.number().default(0),
+            })
+          )
+          .optional(),
       })
       .refine(
         (data) => {
@@ -66,6 +81,7 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -122,9 +138,54 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
     name: "variants",
   });
 
+  const variantAttributesArray = variantFields.map((_, index) =>
+    useFieldArray({
+      control,
+      name: `variants.${index}.attributes`,
+    })
+  );
+
   const onFormSubmit = async (data) => {
     try {
-      await onSubmit(data);
+      // Create FormData for image uploads
+      const formData = new FormData();
+
+      // Prepare variants data with image handling
+      const variantsWithImages = await Promise.all(
+        data.variants.map(async (variant) => {
+          const variantImages = variant.images || [];
+          const processedImages = await Promise.all(
+            variantImages.map(async (image) => {
+              if (image.file) {
+                // Upload new image
+                formData.append("file", image.file);
+                const response = await fetch("/api/v1/products/upload", {
+                  method: "POST",
+                  body: formData,
+                });
+                const result = await response.json();
+                return {
+                  ...image,
+                  imageUrl: result.upload.url,
+                  file: undefined,
+                };
+              }
+              return image;
+            })
+          );
+          return {
+            ...variant,
+            images: processedImages,
+          };
+        })
+      );
+
+      const processedData = {
+        ...data,
+        variants: variantsWithImages,
+      };
+
+      await onSubmit(processedData);
       toast.success("Product added successfully!");
       reset();
     } catch (error) {
@@ -394,56 +455,111 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
               )}
             </div>
           </div>
-
-          <h5 className="text-md font-semibold text-gray-800">Attributes</h5>
-          {variant.attributes.map((attr, attrIndex) => (
-            <div key={attrIndex} className="space-y-2">
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.attributes.${attrIndex}.attributeType`}
+          <div className="space-y-4">
+            <h5 className="text-md font-semibold text-gray-800">Images</h5>
+            <ImageUpload
+              images={watch(`variants.${index}.images`) || []}
+              onChange={(images) =>
+                setValue(`variants.${index}.images`, images)
+              }
+              onDelete={(imageIndex) => {
+                const images = getValues(`variants.${index}.images`);
+                const newImages = [...images];
+                newImages.splice(imageIndex, 1);
+                setValue(`variants.${index}.images`, newImages);
+              }}
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-start align-middle space-x-3">
+              <h5 className="text-md font-semibold text-gray-800">
+                Attributes
+              </h5>
+              <button
+                type="button"
+                onClick={() => {
+                  variantAttributesArray[index].append({
+                    attributeType: "",
+                    attributeValue: "",
+                  });
+                }}
+                className="inline-flex items-center p-1 text-violet-600 hover:text-violet-700 rounded-full hover:bg-violet-50"
               >
-                Attribute Type
-              </label>
-              <input
-                type="text"
-                {...register(
-                  `variants.${index}.attributes.${attrIndex}.attributeType`
-                )}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.attributes?.[attrIndex]
-                ?.attributeType && (
-                <p className="text-red-500 text-sm">
-                  {
-                    errors.variants?.[index]?.attributes?.[attrIndex]
-                      ?.attributeType?.message
-                  }
-                </p>
-              )}
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.attributes.${attrIndex}.attributeValue`}
-              >
-                Attribute Value
-              </label>
-              <input
-                type="text"
-                {...register(
-                  `variants.${index}.attributes.${attrIndex}.attributeValue`
-                )}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.attributes?.[attrIndex]
-                ?.attributeValue && (
-                <p className="text-red-500 text-sm">
-                  {
-                    errors.variants?.[index]?.attributes?.[attrIndex]
-                      ?.attributeValue?.message
-                  }
-                </p>
-              )}
+                <FaPlusCircle className="h-5 w-5" />
+              </button>
             </div>
-          ))}
+            {variantAttributesArray[index].fields.map((attr, attrIndex) => (
+              <div
+                key={attr.id}
+                className="flex gap-4 mb-2 items-center align-middle"
+              >
+                <div className="flex-1">
+                  <label
+                    className="block text-sm font-medium text-gray-700"
+                    htmlFor={`variants.${index}.attributes.${attrIndex}.attributeType`}
+                  >
+                    Attribute Type
+                  </label>
+                  <input
+                    type="text"
+                    {...register(
+                      `variants.${index}.attributes.${attrIndex}.attributeType`
+                    )}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
+                  />
+                  {errors.variants?.[index]?.attributes?.[attrIndex]
+                    ?.attributeType && (
+                    <p className="text-red-500 text-sm">
+                      {
+                        errors.variants?.[index]?.attributes?.[attrIndex]
+                          ?.attributeType?.message
+                      }
+                    </p>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label
+                    className="block text-sm font-medium text-gray-700"
+                    htmlFor={`variants.${index}.attributes.${attrIndex}.attributeValue`}
+                  >
+                    Attribute Value
+                  </label>
+                  <input
+                    type="text"
+                    {...register(
+                      `variants.${index}.attributes.${attrIndex}.attributeValue`
+                    )}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
+                  />
+                  {errors.variants?.[index]?.attributes?.[attrIndex]
+                    ?.attributeValue && (
+                    <p className="text-red-500 text-sm">
+                      {
+                        errors.variants?.[index]?.attributes?.[attrIndex]
+                          ?.attributeValue?.message
+                      }
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center pt-5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      variantAttributesArray[index].remove(attrIndex)
+                    }
+                    disabled={variantAttributesArray[index].fields.length <= 1}
+                    className={`p-2 rounded-full ${
+                      variantAttributesArray[index].fields.length <= 1
+                        ? "text-gray-400 hover:bg-transparent cursor-not-allowed"
+                        : "text-red-600 hover:text-red-700 hover:bg-red-50"
+                    }`}
+                  >
+                    <FaRegTrashCan className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => remove(index)}
