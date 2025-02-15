@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { FiEdit3 } from "react-icons/fi";
 import InventoryForm from "./InventoryForm";
+import { RiFolderUploadFill } from "react-icons/ri";
+import { TiEye } from "react-icons/ti";
+import ImageUpload from "./ImageUpload";
 
 const ProductTable = ({
   products,
@@ -18,6 +21,7 @@ const ProductTable = ({
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isInventoryFormOpen, setIsInventoryFormOpen] = useState(false);
+  const [isImageUploadFormOpen, setIsImageUploadFormOpen] = useState(false);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -41,6 +45,9 @@ const ProductTable = ({
     } else if (type === "inventory") {
       setSelectedVariant(data);
       setIsInventoryFormOpen(true);
+    } else if (type === "image") {
+      setSelectedVariant(data);
+      setIsImageUploadFormOpen(true);
     }
   };
 
@@ -133,6 +140,7 @@ const ProductTable = ({
                           <th className="p-2 text-start">Sale Price</th>
                           <th className="p-2 text-start">Stock</th>
                           <th className="p-2 text-start">Inventory</th>
+                          <th className="p-2 text-start">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -171,8 +179,20 @@ const ProductTable = ({
                                   )
                                 }
                               >
-                                Check
+                                <TiEye />
                               </button>
+                            </td>
+                            <td className="p-2">
+                              <div className="flex gap-2">
+                                <button
+                                  className="btn btn-sm bg-violet-600 text-white hover:bg-violet-700"
+                                  onClick={(e) =>
+                                    handleClickActionButton(e, "image", variant)
+                                  }
+                                >
+                                  <RiFolderUploadFill />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -213,6 +233,16 @@ const ProductTable = ({
           }}
           variant={selectedVariant}
           inventory={selectedVariant?.inventory}
+        />
+      )}
+      {selectedVariant && isImageUploadFormOpen && (
+        <ImageUpload
+          isOpen={isImageUploadFormOpen}
+          onClose={() => {
+            setIsImageUploadFormOpen(false);
+            setSelectedVariant(null);
+          }}
+          variant={selectedVariant}
         />
       )}
     </div>

@@ -8,7 +8,6 @@ import CategorySelect from "../category/CategorySelect";
 import useCategory from "../../hooks/useCategory";
 import { FaPlusCircle } from "react-icons/fa";
 import { FaRegTrashCan } from "react-icons/fa6";
-import ImageUpload from "./ImageUpload";
 
 const productSchema = z.object({
   categoryId: z.number().min(1, "Category is required"),
@@ -41,18 +40,6 @@ const productSchema = z.object({
             attributeValue: z.string().min(1, "Attribute Value is required"),
           })
         ),
-        images: z
-          .array(
-            z.object({
-              id: z.number().optional(),
-              file: z.any().optional(),
-              imageUrl: z.string().optional(),
-              altText: z.string().optional(),
-              isPrimary: z.boolean().default(false),
-              sortOrder: z.number().default(0),
-            })
-          )
-          .optional(),
       })
       .refine(
         (data) => {
@@ -147,45 +134,7 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
 
   const onFormSubmit = async (data) => {
     try {
-      // Create FormData for image uploads
-      const formData = new FormData();
-
-      // Prepare variants data with image handling
-      const variantsWithImages = await Promise.all(
-        data.variants.map(async (variant) => {
-          const variantImages = variant.images || [];
-          const processedImages = await Promise.all(
-            variantImages.map(async (image) => {
-              if (image.file) {
-                // Upload new image
-                formData.append("file", image.file);
-                const response = await fetch("/api/v1/products/upload", {
-                  method: "POST",
-                  body: formData,
-                });
-                const result = await response.json();
-                return {
-                  ...image,
-                  imageUrl: result.upload.url,
-                  file: undefined,
-                };
-              }
-              return image;
-            })
-          );
-          return {
-            ...variant,
-            images: processedImages,
-          };
-        })
-      );
-
-      const processedData = {
-        ...data,
-        variants: variantsWithImages,
-      };
-
-      await onSubmit(processedData);
+      await onSubmit(data);
       toast.success("Product added successfully!");
       reset();
     } catch (error) {
@@ -454,21 +403,6 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
                 </p>
               )}
             </div>
-          </div>
-          <div className="space-y-4">
-            <h5 className="text-md font-semibold text-gray-800">Images</h5>
-            <ImageUpload
-              images={watch(`variants.${index}.images`) || []}
-              onChange={(images) =>
-                setValue(`variants.${index}.images`, images)
-              }
-              onDelete={(imageIndex) => {
-                const images = getValues(`variants.${index}.images`);
-                const newImages = [...images];
-                newImages.splice(imageIndex, 1);
-                setValue(`variants.${index}.images`, newImages);
-              }}
-            />
           </div>
           <div>
             <div className="flex items-center justify-start align-middle space-x-3">

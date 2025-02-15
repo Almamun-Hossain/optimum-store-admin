@@ -5,6 +5,7 @@ import { store } from "./store/store";
 
 import "./css/style.css";
 import "./charts/ChartjsConfig";
+import { Toaster } from "react-hot-toast";
 
 // Import pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -12,7 +13,6 @@ const SignIn = React.lazy(() => import("./pages/SignIn"));
 const ProtectedRoute = React.lazy(() => import("./components/ProtectedRoute"));
 const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
 const ProductsPage = React.lazy(() => import("./pages/ProductsPage"));
-
 
 function App() {
   const location = useLocation();

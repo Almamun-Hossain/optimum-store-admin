@@ -45,6 +45,29 @@ export const productApi = createApi({
             }),
             invalidatesTags: ["Product"],
         }),
+        uploadProductVariantImage: builder.mutation({
+            query: ({ id, variantId, data }) => ({
+                url: `/product/${id}/variants/${variantId}/images`,
+                method: "POST",
+                body: data,
+                formData: true,
+            }),
+            invalidatesTags: ["Product"],
+        }),
+        updateProductionVariantPrimaryImage: builder.mutation({
+            query: ({ id, variantId, imageId }) => ({
+                url: `/product/${id}/variants/${variantId}/images/${imageId}`,
+                method: "PUT",
+            }),
+            invalidatesTags: ["Product"],
+        }),
+        deleteProductVariantImage: builder.mutation({
+            query: ({ id, variantId, imageId }) => ({
+                url: `/product/${id}/variants/${variantId}/images/${imageId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ["Product"],
+        }),
     }),
 });
 
@@ -54,4 +77,7 @@ export const {
     useUpdateProductMutation,
     useDeleteProductMutation,
     useCreateOrUpdateInventoryMutation,
+    useUploadProductVariantImageMutation,
+    useUpdateProductionVariantPrimaryImageMutation,
+    useDeleteProductVariantImageMutation,
 } = productApi;
