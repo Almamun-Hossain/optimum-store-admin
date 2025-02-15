@@ -29,6 +29,12 @@ else
     echo "❌ Environment file $ENV_FILE not found!"
     exit 1
 fi
+    
+# Build the project with the correct env file
+echo "🏗️ Building project with $ENV_FILE..."
+cp $ENV_FILE .env
+npm run build
+rm .env
 
 # Deploy using Wrangler
 echo "🚀 Deploying to Cloudflare Pages ($BRANCH)..."
