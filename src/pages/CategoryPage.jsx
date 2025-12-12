@@ -48,9 +48,22 @@ function CategoryPage() {
 
   const handleDrop = async (draggedId, targetId) => {
     try {
+      // If targetId is null, we're moving to root - no need to check for circular references
+      if (targetId === null) {
+        await moveCategory({ draggedId, targetId: null }).unwrap();
+        toast.success("Category moved to root level successfully");
+        return;
+      }
+
       // Find the dragged category and target category
       const draggedCategory = categories.find((cat) => cat.id === draggedId);
       const targetCategory = categories.find((cat) => cat.id === targetId);
+
+      // Prevent dropping onto itself
+      if (draggedId === targetId) {
+        toast.error("Cannot move a category onto itself");
+        return;
+      }
 
       // Prevent dropping a parent onto its own child
       const isTargetChildOfDragged = (target) => {
@@ -159,8 +172,9 @@ function CategoryPage() {
                     <div className="flex-1">
                       <p className="text-sm text-violet-800 dark:text-violet-200">
                         <span className="font-medium">Tip:</span> Drag and drop
-                        categories to reorganize them. Categories with products
-                        cannot be deleted.
+                        categories to reorganize them. Drop nested categories into
+                        the root drop zone to make them root-level categories.
+                        Categories with products cannot be deleted.
                       </p>
                     </div>
                   </div>
