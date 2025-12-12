@@ -1,5 +1,6 @@
 import React from "react";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
+import PermissionGuard from "../PermissionGuard";
 
 const NotificationTable = ({
   logs,
@@ -120,31 +121,37 @@ const NotificationTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center gap-2">
                     {onView && (
-                      <button
-                        onClick={() => onView(log)}
-                        className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
-                        title="View Details"
-                      >
-                        <FiEye className="w-5 h-5" />
-                      </button>
+                      <PermissionGuard permission="notifications.view">
+                        <button
+                          onClick={() => onView(log)}
+                          className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
+                          title="View Details"
+                        >
+                          <FiEye className="w-5 h-5" />
+                        </button>
+                      </PermissionGuard>
                     )}
                     {onEdit && (
-                      <button
-                        onClick={() => onEdit(log)}
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                        title="Edit"
-                      >
-                        <FiEdit className="w-5 h-5" />
-                      </button>
+                      <PermissionGuard permission="notifications.update">
+                        <button
+                          onClick={() => onEdit(log)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                          title="Edit"
+                        >
+                          <FiEdit className="w-5 h-5" />
+                        </button>
+                      </PermissionGuard>
                     )}
                     {onDelete && (
-                      <button
-                        onClick={() => onDelete(log.id)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                        title="Delete"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </button>
+                      <PermissionGuard permission="notifications.delete">
+                        <button
+                          onClick={() => onDelete(log.id)}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </PermissionGuard>
                     )}
                   </div>
                 </td>

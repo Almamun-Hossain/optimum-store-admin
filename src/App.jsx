@@ -20,6 +20,7 @@ const InventoryPage = React.lazy(() => import("./pages/InventoryPage"));
 const ShippingMethodsPage = React.lazy(() => import("./pages/ShippingMethodsPage"));
 const NotificationLogsPage = React.lazy(() => import("./pages/NotificationLogsPage"));
 const AdminUsersPage = React.lazy(() => import("./pages/AdminUsersPage"));
+const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
 
 function App() {
   const location = useLocation();
@@ -105,6 +106,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
                 </ProtectedRoute>
               }
             />

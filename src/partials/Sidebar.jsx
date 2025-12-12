@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import SidebarLinkGroup from "./SidebarLinkGroup";
+import PermissionGuard from "../components/PermissionGuard";
 
 function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
   const location = useLocation();
@@ -261,70 +262,78 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                       </a>
                       <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
                         <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/customers"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Customers
-                              </span>
-                            </NavLink>
-                          </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/orders"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Orders
-                              </span>
-                            </NavLink>
-                          </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/products"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Products
-                              </span>
-                            </NavLink>
-                          </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/category"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Category
-                              </span>
-                            </NavLink>
-                          </li>
+                          <PermissionGuard module="users" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/customers"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Customers
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="orders" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/orders"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Orders
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="products" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/products"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Products
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="categories" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/category"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Category
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
                         </ul>
                       </div>
                     </React.Fragment>
@@ -385,70 +394,78 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                       </a>
                       <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
                         <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/users"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Admin Users
-                              </span>
-                            </NavLink>
-                          </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/inventory"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Inventory
-                              </span>
-                            </NavLink>
-                          </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/shipping-methods"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Shipping Methods
-                              </span>
-                            </NavLink>
-                          </li>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="/notification-logs"
-                              className={({ isActive }) =>
-                                "block transition duration-150 truncate " +
-                                (isActive
-                                  ? "text-violet-500"
-                                  : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
-                              }
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Notification Logs
-                              </span>
-                            </NavLink>
-                          </li>
+                          <PermissionGuard module="admin_users" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/users"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Admin Users
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="inventory" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/inventory"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Inventory
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="shipping" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/shipping-methods"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Shipping Methods
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="notifications" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/notification-logs"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Notification Logs
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
                         </ul>
                       </div>
                     </React.Fragment>

@@ -13,6 +13,7 @@ import ProductTable from "../components/product/ProductTable";
 import ProductForm from "../components/product/ProductForm";
 import GlobalModal from "../components/GlobalModal";
 import ToasterWrapper from "../layout/ToasterWrapper";
+import PermissionGuard from "../components/PermissionGuard";
 
 function ProductsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -106,12 +107,14 @@ function ProductsPage() {
                 </h1>
                 <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                   <ProductSearch onSearch={setSearchTerm} />
-                  <button
-                    onClick={handleOpenModal}
-                    className="btn bg-violet-500 hover:bg-violet-600 text-white"
-                  >
-                    Add Product
-                  </button>
+                  <PermissionGuard permission="products.create">
+                    <button
+                      onClick={handleOpenModal}
+                      className="btn bg-violet-500 hover:bg-violet-600 text-white"
+                    >
+                      Add Product
+                    </button>
+                  </PermissionGuard>
                 </div>
               </div>
               <ProductTable

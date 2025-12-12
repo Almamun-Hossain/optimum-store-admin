@@ -1,5 +1,6 @@
 import React from "react";
 import { FiEye, FiEdit } from "react-icons/fi";
+import PermissionGuard from "../PermissionGuard";
 
 const OrderTable = ({ orders, onView, onUpdateStatus, isLoading }) => {
   if (isLoading) {
@@ -113,20 +114,24 @@ const OrderTable = ({ orders, onView, onUpdateStatus, isLoading }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onView(order)}
-                      className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
-                      title="View Details"
-                    >
-                      <FiEye className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => onUpdateStatus(order)}
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                      title="Update Status"
-                    >
-                      <FiEdit className="w-5 h-5" />
-                    </button>
+                    <PermissionGuard permission="orders.view">
+                      <button
+                        onClick={() => onView(order)}
+                        className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
+                        title="View Details"
+                      >
+                        <FiEye className="w-5 h-5" />
+                      </button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="orders.update">
+                      <button
+                        onClick={() => onUpdateStatus(order)}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        title="Update Status"
+                      >
+                        <FiEdit className="w-5 h-5" />
+                      </button>
+                    </PermissionGuard>
                   </div>
                 </td>
               </tr>

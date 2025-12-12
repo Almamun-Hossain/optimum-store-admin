@@ -15,6 +15,7 @@ import AdminUserTable from "../components/adminUser/AdminUserTable";
 import AdminUserForm from "../components/adminUser/AdminUserForm";
 import GlobalModal from "../components/GlobalModal";
 import ToasterWrapper from "../layout/ToasterWrapper";
+import PermissionGuard from "../components/PermissionGuard";
 
 function AdminUsersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -165,20 +166,22 @@ function AdminUsersPage() {
                 <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
                   Admin Users Management
                 </h1>
-                <button
-                  onClick={handleCreate}
-                  className="btn bg-violet-500 hover:bg-violet-600 text-white mt-4 sm:mt-0"
-                >
-                  <svg
-                    className="w-4 h-4 fill-current shrink-0"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
+                <PermissionGuard permission="admin_users.create">
+                  <button
+                    onClick={handleCreate}
+                    className="btn bg-violet-500 hover:bg-violet-600 text-white mt-4 sm:mt-0"
                   >
-                    <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                  </svg>
-                  <span className="ml-2">Add Admin User</span>
-                </button>
+                    <svg
+                      className="w-4 h-4 fill-current shrink-0"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                    >
+                      <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                    </svg>
+                    <span className="ml-2">Add Admin User</span>
+                  </button>
+                </PermissionGuard>
               </div>
 
               <div className="mb-4">

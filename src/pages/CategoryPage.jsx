@@ -16,6 +16,7 @@ import { useSelector } from "react-redux";
 import useCategory from "../hooks/useCategory";
 import ToasterWrapper from "../layout/ToasterWrapper";
 import { FaFolderOpen, FaInfoCircle, FaGripVertical } from "react-icons/fa";
+import PermissionGuard from "../components/PermissionGuard";
 
 function CategoryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -147,21 +148,23 @@ function CategoryPage() {
                     <div className="w-full sm:w-64">
                       <CategorySearch onSearch={setSearchTerm} />
                     </div>
-                    <button
-                      onClick={() => {
-                        setSelectedCategory(null);
-                        setIsFormOpen(true);
-                      }}
-                      className="btn bg-violet-500 hover:bg-violet-600 text-white shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                      <svg
-                        className="w-4 h-4 fill-current shrink-0"
-                        viewBox="0 0 16 16"
+                    <PermissionGuard permission="categories.create">
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(null);
+                          setIsFormOpen(true);
+                        }}
+                        className="btn bg-violet-500 hover:bg-violet-600 text-white shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
                       >
-                        <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                      </svg>
-                      <span>Add Category</span>
-                    </button>
+                        <svg
+                          className="w-4 h-4 fill-current shrink-0"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                        </svg>
+                        <span>Add Category</span>
+                      </button>
+                    </PermissionGuard>
                   </div>
                 </div>
 

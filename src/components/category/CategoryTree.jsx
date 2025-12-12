@@ -12,6 +12,7 @@ import {
   FaArrowUp,
   FaHome,
 } from "react-icons/fa";
+import PermissionGuard from "../PermissionGuard";
 
 const CategoryItem = ({
   category,
@@ -126,33 +127,37 @@ const CategoryItem = ({
 
         {/* Action buttons */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(category);
-            }}
-            className="p-2 text-gray-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded transition-colors"
-            title="Edit category"
-            disabled={isDeleting}
-          >
-            <FaEdit size={14} />
-          </button>
-          {hasNoChildrenAndProducts && (
+          <PermissionGuard permission="categories.update">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(category.id);
+                onEdit(category);
               }}
-              className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-              title="Delete category"
+              className="p-2 text-gray-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded transition-colors"
+              title="Edit category"
               disabled={isDeleting}
             >
-              {isDeleting ? (
-                <FaSpinner className="animate-spin" size={14} />
-              ) : (
-                <FaTrash size={14} />
-              )}
+              <FaEdit size={14} />
             </button>
+          </PermissionGuard>
+          {hasNoChildrenAndProducts && (
+            <PermissionGuard permission="categories.delete">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(category.id);
+                }}
+                className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                title="Delete category"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <FaSpinner className="animate-spin" size={14} />
+                ) : (
+                  <FaTrash size={14} />
+                )}
+              </button>
+            </PermissionGuard>
           )}
         </div>
       </div>

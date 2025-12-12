@@ -112,6 +112,68 @@ export const authApi = createApi({
             };
       },
     }),
+    /**
+     * Get current admin user profile
+     */
+    getProfile: builder.query({
+      queryFn: async (arg, { getState }, extraOptions) => {
+        const result = await baseQueryWithAuthCheck(
+          {
+            url: "/api/v1/admin/profile",
+          },
+          { getState },
+          extraOptions
+        );
+
+        if (result.error) {
+          return { error: result.error };
+        }
+
+        if (result.data.success) {
+          // Handle response structure: { success: true, data: { profile: {...} } }
+          return { data: result.data.data };
+        }
+
+        return {
+          error: {
+            status: "CUSTOM_ERROR",
+            data: result.data.error || "Failed to fetch profile",
+          },
+        };
+      },
+    }),
+    /**
+     * Update current admin user profile
+     */
+    updateProfile: builder.mutation({
+      queryFn: async (data, { getState }, extraOptions) => {
+        const result = await baseQueryWithAuthCheck(
+          {
+            url: "/api/v1/admin/profile",
+            method: "PUT",
+            body: data,
+          },
+          { getState },
+          extraOptions
+        );
+
+        if (result.error) {
+          return { error: result.error };
+        }
+
+        if (result.data.success) {
+          // Handle response structure: { success: true, data: { profile: {...} } }
+          return { data: result.data.data };
+        }
+
+        return {
+          error: {
+            status: "CUSTOM_ERROR",
+            data: result.data.error || "Failed to update profile",
+          },
+        };
+      },
+    }),
   }),
 });
 
@@ -119,5 +181,7 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useLogoutAllMutation,
-  useChangePasswordMutation
+  useChangePasswordMutation,
+  useGetProfileQuery,
+  useUpdateProfileMutation,
 } = authApi;

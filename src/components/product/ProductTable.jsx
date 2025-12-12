@@ -5,6 +5,7 @@ import InventoryForm from "./InventoryForm";
 import { RiFolderUploadFill } from "react-icons/ri";
 import { TiEye } from "react-icons/ti";
 import ImageUpload from "./ImageUpload";
+import PermissionGuard from "../PermissionGuard";
 
 const ProductTable = ({
   products,
@@ -112,20 +113,28 @@ const ProductTable = ({
                 </td>
                 <td className="p-2">৳ {getPriceRange(product)}</td>
                 <td className="p-2">
-                  <button
-                    className="text-gray-500 hover:text-gray-700 ml-2"
-                    onClick={(e) => handleClickActionButton(e, "edit", product)}
-                  >
-                    <FiEdit3 />
-                  </button>
-                  <button
-                    className="text-gray-500 hover:text-gray-700 ml-2"
-                    onClick={(e) =>
-                      handleClickActionButton(e, "delete", product)
-                    }
-                  >
-                    <FaRegTrashCan />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <PermissionGuard permission="products.update">
+                      <button
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={(e) => handleClickActionButton(e, "edit", product)}
+                        title="Edit"
+                      >
+                        <FiEdit3 />
+                      </button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="products.delete">
+                      <button
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={(e) =>
+                          handleClickActionButton(e, "delete", product)
+                        }
+                        title="Delete"
+                      >
+                        <FaRegTrashCan />
+                      </button>
+                    </PermissionGuard>
+                  </div>
                 </td>
               </tr>
               {expandedRows[product.id] && (
@@ -169,29 +178,35 @@ const ProductTable = ({
                               )}
                             </td>
                             <td className="p-2">
-                              <button
-                                className="btn btn-sm bg-violet-600 text-white hover:bg-violet-700"
-                                onClick={(e) =>
-                                  handleClickActionButton(
-                                    e,
-                                    "inventory",
-                                    variant
-                                  )
-                                }
-                              >
-                                <TiEye />
-                              </button>
-                            </td>
-                            <td className="p-2">
-                              <div className="flex gap-2">
+                              <PermissionGuard permission="inventory.view">
                                 <button
                                   className="btn btn-sm bg-violet-600 text-white hover:bg-violet-700"
                                   onClick={(e) =>
-                                    handleClickActionButton(e, "image", variant)
+                                    handleClickActionButton(
+                                      e,
+                                      "inventory",
+                                      variant
+                                    )
                                   }
+                                  title="View Inventory"
                                 >
-                                  <RiFolderUploadFill />
+                                  <TiEye />
                                 </button>
+                              </PermissionGuard>
+                            </td>
+                            <td className="p-2">
+                              <div className="flex gap-2">
+                                <PermissionGuard permission="products.manage_images">
+                                  <button
+                                    className="btn btn-sm bg-violet-600 text-white hover:bg-violet-700"
+                                    onClick={(e) =>
+                                      handleClickActionButton(e, "image", variant)
+                                    }
+                                    title="Upload Images"
+                                  >
+                                    <RiFolderUploadFill />
+                                  </button>
+                                </PermissionGuard>
                               </div>
                             </td>
                           </tr>

@@ -4,7 +4,7 @@ import Transition from "../utils/Transition";
 
 import UserAvatar from "../images/user-avatar-32.png";
 import { logout } from "../store/slices/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 function DropdownProfile({ align }) {
@@ -14,6 +14,11 @@ function DropdownProfile({ align }) {
   const dropdown = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+
+  // Get user display name and role
+  const displayName = user?.fullName || user?.email || user?.phone || "User";
+  const userRole = user?.role?.name || "Administrator";
 
   // onclick signout
   const handleSignOut = () => {
@@ -66,7 +71,7 @@ function DropdownProfile({ align }) {
         />
         <div className="flex items-center truncate">
           <span className="truncate ml-2 text-sm font-medium text-gray-600 dark:text-gray-100 group-hover:text-gray-800 dark:group-hover:text-white">
-            Acme Inc.
+            {displayName}
           </span>
           <svg
             className="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500"
@@ -95,11 +100,11 @@ function DropdownProfile({ align }) {
           onBlur={() => setDropdownOpen(false)}
         >
           <div className="pt-0.5 pb-2 px-3 mb-1 border-b border-gray-200 dark:border-gray-700/60">
-            <div className="font-medium text-gray-800 dark:text-gray-100">
-              Acme Inc.
+            <div className="font-medium text-gray-800 dark:text-gray-100 truncate">
+              {displayName}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 italic">
-              Administrator
+              {userRole}
             </div>
           </div>
           <ul>

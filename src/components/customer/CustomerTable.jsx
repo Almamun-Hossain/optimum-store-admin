@@ -1,5 +1,6 @@
 import React from "react";
 import { FiEdit3 } from "react-icons/fi";
+import PermissionGuard from "../PermissionGuard";
 
 const CustomerTable = ({ customers, onEdit, isLoading }) => {
   if (isLoading) {
@@ -104,13 +105,15 @@ const CustomerTable = ({ customers, onEdit, isLoading }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onEdit(customer)}
-                      className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
-                      title="Edit"
-                    >
-                      <FiEdit3 className="w-5 h-5" />
-                    </button>
+                    <PermissionGuard permission="users.update">
+                      <button
+                        onClick={() => onEdit(customer)}
+                        className="text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
+                        title="Edit"
+                      >
+                        <FiEdit3 className="w-5 h-5" />
+                      </button>
+                    </PermissionGuard>
                   </div>
                 </td>
               </tr>
