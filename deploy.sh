@@ -10,10 +10,10 @@ if [ -z "$1" ]; then
 fi
 
 # Set environment based on argument
-if [ "$1" == "dev" ]; then
+if [ "$1" = "dev" ]; then
     BRANCH="dev"
     ENV_FILE=".env.dev"
-elif [ "$1" == "prod" ]; then
+elif [ "$1" = "prod" ]; then
     BRANCH="main"
     ENV_FILE=".env.prod"
 else
@@ -38,7 +38,7 @@ rm .env
 
 # Deploy using Wrangler
 echo "🚀 Deploying to Cloudflare Pages ($BRANCH)..."
-if [ "$1" == "dev" ]; then
+if [ "$1" = "dev" ]; then
     wrangler pages deploy ./dist --project-name diy-admin-dev --branch $BRANCH
 else
     wrangler pages deploy ./dist --project-name diy-admin-production --branch $BRANCH
