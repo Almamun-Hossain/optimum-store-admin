@@ -5,6 +5,8 @@ import { store } from "./store/store";
 
 import "./css/style.css";
 import "./charts/ChartjsConfig";
+import LoadingSpinner from "./components/LoadingSpinner";
+import PageTransition from "./components/PageTransition";
 
 // Import pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -30,82 +32,84 @@ function App() {
 
   return (
     <Provider store={store}>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Routes>
-          <Route path="/signin" element={<SignIn />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/category"
-            element={
-              <ProtectedRoute>
-                <CategoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              <ProtectedRoute>
-                <ProductsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customers"
-            element={
-              <ProtectedRoute>
-                <CustomersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <AdminOrdersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <ProtectedRoute>
-                <InventoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/shipping-methods"
-            element={
-              <ProtectedRoute>
-                <ShippingMethodsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notification-logs"
-            element={
-              <ProtectedRoute>
-                <NotificationLogsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
-                <AdminUsersPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+      <Suspense fallback={<LoadingSpinner />}>
+        <PageTransition>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/signin" element={<SignIn />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/category"
+              element={
+                <ProtectedRoute>
+                  <CategoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                <ProtectedRoute>
+                  <ProductsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customers"
+              element={
+                <ProtectedRoute>
+                  <CustomersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <AdminOrdersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <InventoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shipping-methods"
+              element={
+                <ProtectedRoute>
+                  <ShippingMethodsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notification-logs"
+              element={
+                <ProtectedRoute>
+                  <NotificationLogsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </PageTransition>
       </Suspense>
     </Provider>
   );

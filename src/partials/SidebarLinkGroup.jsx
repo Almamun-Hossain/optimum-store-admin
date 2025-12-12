@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function SidebarLinkGroup({
   children,
@@ -6,6 +6,11 @@ function SidebarLinkGroup({
 }) {
 
   const [open, setOpen] = useState(activecondition);
+
+  // Update open state when activecondition changes (route changes)
+  useEffect(() => {
+    setOpen(activecondition);
+  }, [activecondition]);
 
   const handleClick = () => {
     setOpen(!open);
