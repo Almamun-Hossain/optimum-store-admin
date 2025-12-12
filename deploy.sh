@@ -39,9 +39,9 @@ rm .env
 # Deploy using Wrangler
 echo "🚀 Deploying to Cloudflare Pages ($BRANCH)..."
 if [ "$1" = "dev" ]; then
-    wrangler pages deploy ./dist --project-name diy-admin-dev --branch $BRANCH
+    wrangler pages deploy ./dist --project-name optimumbd-admin-dev --branch $BRANCH
 else
-    wrangler pages deploy ./dist --project-name diy-admin-production --branch $BRANCH
+    wrangler pages deploy ./dist --project-name optimumbd-admin --branch $BRANCH
 fi
 
 echo "✅ Deployment to $BRANCH successful!"
