@@ -15,6 +15,7 @@ import CategorySearch from "../components/category/CategorySearch";
 import { useSelector } from "react-redux";
 import useCategory from "../hooks/useCategory";
 import ToasterWrapper from "../layout/ToasterWrapper";
+import { FaFolderOpen, FaInfoCircle, FaGripVertical } from "react-icons/fa";
 
 function CategoryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -84,6 +85,25 @@ function CategoryPage() {
     }
   };
 
+  const getTotalCategoriesCount = (cats) => {
+    let count = 0;
+    const countRecursive = (items) => {
+      items.forEach((item) => {
+        count++;
+        if (item.children?.length > 0) {
+          countRecursive(item.children);
+        }
+      });
+    };
+    countRecursive(cats);
+    return count;
+  };
+
+  const totalCategories = getTotalCategoriesCount(filteredCategories);
+  const hasResults = filteredCategories.length > 0;
+  const showEmptyState = !categoriesLoading && !hasResults && !searchTerm;
+  const showNoResults = !categoriesLoading && !hasResults && searchTerm;
+
   return (
     <ToasterWrapper>
       <div className="flex h-screen overflow-hidden">
@@ -94,62 +114,180 @@ function CategoryPage() {
 
           <main className="grow">
             <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-              <div className="sm:flex sm:justify-between sm:items-center mb-8">
-                <div className="mb-4 sm:mb-0">
-                  <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-                    Categories
-                  </h1>
-                </div>
-
-                <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                  <CategorySearch onSearch={setSearchTerm} />
-                  <button
-                    onClick={() => {
-                      setSelectedCategory(null);
-                      setIsFormOpen(true);
-                    }}
-                    className="btn bg-violet-500 hover:bg-violet-600 text-white"
-                  >
-                    <svg
-                      className="w-4 h-4 fill-current opacity-50 shrink-0"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                    </svg>
-                    <span className="ml-2">Add Category</span>
-                  </button>
-                </div>
-              </div>
-
-              {categoriesLoading ? (
-                <div className="text-center">Loading...</div>
-              ) : (
-                <div className="grid grid-cols-12 gap-6">
-                  <div className="col-span-full xl:col-span-8 bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                    <DndProvider backend={HTML5Backend}>
-                      <CategoryTree
-                        categories={filteredCategories}
-                        onDrop={handleDrop}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        isDeleting={isDeleting}
-                      />
-                    </DndProvider>
+              {/* Header Section */}
+              <div className="mb-8">
+                <div className="sm:flex sm:justify-between sm:items-center mb-6">
+                  <div className="mb-4 sm:mb-0">
+                    <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold mb-2">
+                      Categories
+                    </h1>
+                    {!categoriesLoading && categories && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {searchTerm
+                          ? `${totalCategories} result${totalCategories !== 1 ? "s" : ""} found`
+                          : `${getTotalCategoriesCount(categories)} total categor${getTotalCategoriesCount(categories) !== 1 ? "ies" : "y"}`}
+                      </p>
+                    )}
                   </div>
 
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="w-full sm:w-64">
+                      <CategorySearch onSearch={setSearchTerm} />
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setIsFormOpen(true);
+                      }}
+                      className="btn bg-violet-500 hover:bg-violet-600 text-white shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                      <svg
+                        className="w-4 h-4 fill-current shrink-0"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                      </svg>
+                      <span>Add Category</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Helpful Info Banner */}
+                {!categoriesLoading && hasResults && (
+                  <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-lg p-3 flex items-start gap-3">
+                    <FaInfoCircle className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-violet-800 dark:text-violet-200">
+                        <span className="font-medium">Tip:</span> Drag and drop
+                        categories to reorganize them. Categories with products
+                        cannot be deleted.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Loading State */}
+              {categoriesLoading ? (
+                <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-12">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="relative w-16 h-16 mb-4">
+                      <div className="absolute inset-0 border-4 border-violet-200 dark:border-violet-800 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 font-medium">
+                      Loading categories...
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Category Tree Section */}
+                  <div
+                    className={`${
+                      isFormOpen
+                        ? "lg:col-span-7 xl:col-span-8"
+                        : "lg:col-span-12 xl:col-span-12"
+                    } transition-all duration-300`}
+                  >
+                    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                      {/* Tree Header */}
+                      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                        <div className="flex items-center justify-between">
+                          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                            <FaGripVertical className="text-gray-400" />
+                            Category Structure
+                          </h2>
+                          {searchTerm && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                              Search: "{searchTerm}"
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Tree Content */}
+                      <div className="p-6 min-h-[400px]">
+                        {showEmptyState ? (
+                          <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                              <FaFolderOpen className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                              No categories yet
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+                              Get started by creating your first category. You
+                              can organize them hierarchically and drag to
+                              reorder.
+                            </p>
+                            <button
+                              onClick={() => {
+                                setSelectedCategory(null);
+                                setIsFormOpen(true);
+                              }}
+                              className="btn bg-violet-500 hover:bg-violet-600 text-white"
+                            >
+                              <svg
+                                className="w-4 h-4 fill-current shrink-0"
+                                viewBox="0 0 16 16"
+                              >
+                                <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                              </svg>
+                              <span className="ml-2">Create First Category</span>
+                            </button>
+                          </div>
+                        ) : showNoResults ? (
+                          <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                              <FaFolderOpen className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                              No results found
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+                              No categories match your search term "
+                              <span className="font-medium">{searchTerm}</span>
+                              ". Try a different search term.
+                            </p>
+                            <button
+                              onClick={() => setSearchTerm("")}
+                              className="btn border-gray-200 hover:border-gray-300 text-gray-600 dark:text-gray-300"
+                            >
+                              Clear Search
+                            </button>
+                          </div>
+                        ) : (
+                          <DndProvider backend={HTML5Backend}>
+                            <CategoryTree
+                              categories={filteredCategories}
+                              onDrop={handleDrop}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              isDeleting={isDeleting}
+                            />
+                          </DndProvider>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category Form Section */}
                   {isFormOpen && (
-                    <div className="col-span-full xl:col-span-4">
-                      <CategoryForm
-                        category={selectedCategory}
-                        onClose={() => {
-                          setIsFormOpen(false);
-                          setSelectedCategory(null);
-                        }}
-                        onSubmit={() => {
-                          setIsFormOpen(false);
-                          setSelectedCategory(null);
-                        }}
-                      />
+                    <div className="lg:col-span-5 xl:col-span-4 animate-in slide-in-from-right duration-300">
+                      <div className="sticky top-6">
+                        <CategoryForm
+                          category={selectedCategory}
+                          onClose={() => {
+                            setIsFormOpen(false);
+                            setSelectedCategory(null);
+                          }}
+                          onSubmit={() => {
+                            setIsFormOpen(false);
+                            setSelectedCategory(null);
+                          }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

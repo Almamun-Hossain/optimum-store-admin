@@ -5,7 +5,6 @@ import { store } from "./store/store";
 
 import "./css/style.css";
 import "./charts/ChartjsConfig";
-import { Toaster } from "react-hot-toast";
 
 // Import pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -13,6 +12,12 @@ const SignIn = React.lazy(() => import("./pages/SignIn"));
 const ProtectedRoute = React.lazy(() => import("./components/ProtectedRoute"));
 const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
 const ProductsPage = React.lazy(() => import("./pages/ProductsPage"));
+const CustomersPage = React.lazy(() => import("./pages/CustomersPage"));
+const AdminOrdersPage = React.lazy(() => import("./pages/AdminOrdersPage"));
+const InventoryPage = React.lazy(() => import("./pages/InventoryPage"));
+const ShippingMethodsPage = React.lazy(() => import("./pages/ShippingMethodsPage"));
+const NotificationLogsPage = React.lazy(() => import("./pages/NotificationLogsPage"));
+const AdminUsersPage = React.lazy(() => import("./pages/AdminUsersPage"));
 
 function App() {
   const location = useLocation();
@@ -49,6 +54,54 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProductsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute>
+                <CustomersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <AdminOrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute>
+                <InventoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shipping-methods"
+            element={
+              <ProtectedRoute>
+                <ShippingMethodsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notification-logs"
+            element={
+              <ProtectedRoute>
+                <NotificationLogsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsersPage />
               </ProtectedRoute>
             }
           />

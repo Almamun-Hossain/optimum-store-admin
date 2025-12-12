@@ -2,7 +2,10 @@ import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, logout } from "../slices/authSlice";
 
 const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
-    const token = api.getState().auth.token;
+    const state = api.getState();
+    const token = state.auth.token;
+    const refreshToken = state.auth.refreshToken;
+
     const result = await fetchBaseQuery({
         baseUrl: import.meta.env.VITE_API_BASE_URL,
         prepareHeaders: (headers) => {
@@ -13,37 +16,84 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
         },
     })(args, api, extraOptions);
 
-    // Check if the token has expired (assuming 405 indicates expiration)
-    if (result.error && result.error.status === 405) {
-        const refreshKey = result.error?.data?.error?.refreshKey;
+    // Check if the token has expired
+    // Handle both status codes (401 Unauthorized, 405 Token expired) and error messages
+    const errorData = result.error?.data || result.data;
+    const errorMessage = typeof errorData === 'object' 
+        ? (errorData.error || errorData.message || '')
+        : (errorData || '');
+    const errorMessageStr = typeof errorMessage === 'string' 
+        ? errorMessage.toLowerCase() 
+        : '';
+    
+    const isTokenExpired = 
+        (result.error && (
+            result.error.status === 401 || 
+            result.error.status === 405
+        )) ||
+        (result.data && result.data.success === false && errorMessageStr.includes('token expired')) ||
+        (result.error && errorMessageStr.includes('token expired'));
 
-        if (refreshKey) {
+    if (isTokenExpired && refreshToken) {
+        try {
+            // Call refresh token API
             const refreshResult = await fetchBaseQuery({
                 baseUrl: import.meta.env.VITE_API_BASE_URL,
                 prepareHeaders: (headers) => {
-                    headers.set("Authorization", `Bearer ${token}`);
-                    headers.set('x-refresh-key', refreshKey);
+                    // Use expired token as per API docs
+                    if (token) {
+                        headers.set("Authorization", `Bearer ${token}`);
+                    }
+                    headers.set("x-refresh-token", refreshToken);
                     return headers;
                 },
-            })('/refresh-token', {
-                method: 'GET',
-            }).then((res) => res.data);
+            })(
+                {
+                    url: "/api/v1/refresh-token",
+                    method: "POST",
+                },
+                api,
+                extraOptions
+            );
 
-            if (refreshResult.data) {
-                api.dispatch(setCredentials(refreshResult.data));
+            if (refreshResult.data && refreshResult.data.success) {
+                // Update credentials with new tokens
+                api.dispatch(
+                    setCredentials({
+                        user: refreshResult.data.data.user || state.auth.user,
+                        accessToken: refreshResult.data.data.accessToken,
+                        refreshToken: refreshResult.data.data.refreshToken,
+                    })
+                );
 
+                // Retry the original request with new token
                 const retryResult = await fetchBaseQuery({
                     baseUrl: import.meta.env.VITE_API_BASE_URL,
                     prepareHeaders: (headers) => {
-                        headers.set("authorization", `Bearer ${refreshResult.data.token}`);
+                        headers.set(
+                            "authorization",
+                            `Bearer ${refreshResult.data.data.accessToken}`
+                        );
                         return headers;
                     },
                 })(args, api, extraOptions);
 
                 return retryResult;
+            } else {
+                // Refresh token failed, logout
+                api.dispatch(logout());
+                return refreshResult.error ? refreshResult : result;
             }
+        } catch (error) {
+            // If refresh fails, logout
+            api.dispatch(logout());
+            return result;
         }
+    } else if (isTokenExpired && !refreshToken) {
+        // Token expired but no refresh token available, logout
+        api.dispatch(logout());
     } else if (result.error && result.error.status === 406) {
+        // 406 indicates refresh token expired or invalid
         api.dispatch(logout());
     }
 

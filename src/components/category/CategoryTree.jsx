@@ -6,6 +6,9 @@ import {
   FaChevronRight,
   FaChevronDown,
   FaSpinner,
+  FaGripVertical,
+  FaFolder,
+  FaFolderOpen,
 } from "react-icons/fa";
 
 const CategoryItem = ({

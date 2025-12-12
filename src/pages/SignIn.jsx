@@ -42,14 +42,12 @@ function SignIn() {
     setIsLoading(true);
     try {
       const result = await login(data).unwrap();
-      if (result.success) {
-        dispatch(setCredentials(result.data));
-        navigate(from, { replace: true });
-      } else {
-        setError(result.message);
-      }
+      // result is already transformed, contains user, accessToken, refreshToken
+      dispatch(setCredentials(result));
+      navigate(from, { replace: true });
     } catch (err) {
-      setError(err?.data?.error || "Invalid credentials");
+      console.log(err);
+      setError(err?.data?.error || err?.message || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }
