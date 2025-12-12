@@ -30,6 +30,21 @@ function ShippingMethodsPage() {
     city: "",
   });
 
+  // Filter configuration
+  const filterConfig = [
+    {
+      key: "isActive",
+      type: "boolean",
+      label: "Active Status",
+    },
+    {
+      key: "city",
+      type: "text",
+      label: "City",
+      placeholder: "Filter by city",
+    },
+  ];
+
   const queryParams = useMemo(() => {
     const params = {};
     if (filters.isActive !== "") {
@@ -175,7 +190,9 @@ function ShippingMethodsPage() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onClearFilters={handleClearFilters}
+                filterConfig={filterConfig}
                 title="Filters"
+                defaultOpen={false}
               />
 
               <ShippingTable

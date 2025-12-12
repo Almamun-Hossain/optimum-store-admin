@@ -33,6 +33,64 @@ function AdminOrdersPage() {
     endDate: "",
   });
 
+  // Filter configuration
+  const filterConfig = [
+    {
+      key: "status",
+      type: "select",
+      label: "Order Status",
+      options: [
+        { value: "pending", label: "Pending" },
+        { value: "processing", label: "Processing" },
+        { value: "shipped", label: "Shipped" },
+        { value: "delivered", label: "Delivered" },
+        { value: "cancelled", label: "Cancelled" },
+        { value: "refunded", label: "Refunded" },
+      ],
+    },
+    {
+      key: "paymentStatus",
+      type: "select",
+      label: "Payment Status",
+      options: [
+        { value: "pending", label: "Pending" },
+        { value: "paid", label: "Paid" },
+        { value: "failed", label: "Failed" },
+        { value: "refunded", label: "Refunded" },
+      ],
+    },
+    {
+      key: "paymentMethod",
+      type: "select",
+      label: "Payment Method",
+      options: [
+        { value: "credit_card", label: "Credit Card" },
+        { value: "debit_card", label: "Debit Card" },
+        { value: "paypal", label: "PayPal" },
+        { value: "bank_transfer", label: "Bank Transfer" },
+        { value: "cash_on_delivery", label: "Cash on Delivery" },
+      ],
+    },
+    {
+      key: "userId",
+      type: "text",
+      label: "User ID",
+      placeholder: "Filter by user ID",
+    },
+    {
+      key: "startDate",
+      type: "text",
+      label: "Start Date",
+      placeholder: "YYYY-MM-DD",
+    },
+    {
+      key: "endDate",
+      type: "text",
+      label: "End Date",
+      placeholder: "YYYY-MM-DD",
+    },
+  ];
+
   const queryParams = useMemo(() => {
     const params = {
       page: currentPage,
@@ -156,7 +214,9 @@ function AdminOrdersPage() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onClearFilters={handleClearFilters}
+                filterConfig={filterConfig}
                 title="Filters"
+                defaultOpen={false}
               />
 
               <OrderTable

@@ -34,6 +34,55 @@ function NotificationLogsPage() {
     endDate: "",
   });
 
+  // Filter configuration
+  const filterConfig = [
+    {
+      key: "userId",
+      type: "text",
+      label: "User ID",
+      placeholder: "Filter by user ID",
+    },
+    {
+      key: "type",
+      type: "select",
+      label: "Notification Type",
+      options: [
+        { value: "email", label: "Email" },
+        { value: "sms", label: "SMS" },
+        { value: "push", label: "Push Notification" },
+      ],
+    },
+    {
+      key: "template",
+      type: "text",
+      label: "Template",
+      placeholder: "Filter by template name",
+    },
+    {
+      key: "status",
+      type: "select",
+      label: "Status",
+      options: [
+        { value: "sent", label: "Sent" },
+        { value: "failed", label: "Failed" },
+        { value: "pending", label: "Pending" },
+        { value: "delivered", label: "Delivered" },
+      ],
+    },
+    {
+      key: "startDate",
+      type: "text",
+      label: "Start Date",
+      placeholder: "YYYY-MM-DD",
+    },
+    {
+      key: "endDate",
+      type: "text",
+      label: "End Date",
+      placeholder: "YYYY-MM-DD",
+    },
+  ];
+
   const queryParams = useMemo(() => {
     const params = {
       page: currentPage,
@@ -195,7 +244,9 @@ function NotificationLogsPage() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onClearFilters={handleClearFilters}
+                filterConfig={filterConfig}
                 title="Filters"
+                defaultOpen={false}
               />
 
               <NotificationTable

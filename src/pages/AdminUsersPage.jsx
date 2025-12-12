@@ -27,6 +27,15 @@ function AdminUsersPage() {
     isActive: "",
   });
 
+  // Filter configuration
+  const filterConfig = [
+    {
+      key: "isActive",
+      type: "boolean",
+      label: "Active Status",
+    },
+  ];
+
   const queryParams = useMemo(() => {
     const params = {
       page: currentPage,
@@ -183,7 +192,9 @@ function AdminUsersPage() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onClearFilters={handleClearFilters}
+                filterConfig={filterConfig}
                 title="Filters"
+                defaultOpen={false}
               />
 
               <AdminUserTable

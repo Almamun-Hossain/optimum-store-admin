@@ -31,6 +31,47 @@ function CustomersPage() {
     ageMax: "",
   });
 
+  // Filter configuration - defines field types and options
+  const filterConfig = [
+    {
+      key: "isEmailVerified",
+      type: "boolean",
+      label: "Email Verified",
+    },
+    {
+      key: "isPhoneVerified",
+      type: "boolean",
+      label: "Phone Verified",
+    },
+    {
+      key: "isActive",
+      type: "boolean",
+      label: "Active Status",
+    },
+    {
+      key: "gender",
+      type: "select",
+      label: "Gender",
+      options: ["Male", "Female", "Other"],
+    },
+    {
+      key: "ageMin",
+      type: "number",
+      label: "Min Age",
+      placeholder: "Minimum age",
+      min: 0,
+      max: 150,
+    },
+    {
+      key: "ageMax",
+      type: "number",
+      label: "Max Age",
+      placeholder: "Maximum age",
+      min: 0,
+      max: 150,
+    },
+  ];
+
   const queryParams = useMemo(() => {
     const params = {
       page: currentPage,
@@ -163,7 +204,9 @@ function CustomersPage() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onClearFilters={handleClearFilters}
+                filterConfig={filterConfig}
                 title="Filters"
+                defaultOpen={false}
               />
 
               <CustomerTable customers={customers} onEdit={handleEdit} isLoading={isLoading} />
