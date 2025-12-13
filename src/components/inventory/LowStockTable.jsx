@@ -1,5 +1,6 @@
 import React from "react";
 import { FiEdit } from "react-icons/fi";
+import EmptyState from "../shared/EmptyState";
 
 const LowStockTable = ({ items, onAdjust, isLoading }) => {
   if (isLoading) {
@@ -13,9 +14,11 @@ const LowStockTable = ({ items, onAdjust, isLoading }) => {
 
   if (!items || items.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">No low stock items found</p>
-      </div>
+      <EmptyState
+        icon="warehouse"
+        title="No low stock items found"
+        message="Great! All your inventory items are well stocked."
+      />
     );
   }
 

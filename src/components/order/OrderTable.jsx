@@ -1,6 +1,7 @@
 import React from "react";
 import { FiEye, FiEdit } from "react-icons/fi";
 import PermissionGuard from "../PermissionGuard";
+import EmptyState from "../shared/EmptyState";
 
 const OrderTable = ({ orders, onView, onUpdateStatus, isLoading }) => {
   if (isLoading) {
@@ -14,9 +15,11 @@ const OrderTable = ({ orders, onView, onUpdateStatus, isLoading }) => {
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">No orders found</p>
-      </div>
+      <EmptyState
+        icon="cart"
+        title="No orders found"
+        message="No orders match your current filters. Try adjusting your search or filters."
+      />
     );
   }
 

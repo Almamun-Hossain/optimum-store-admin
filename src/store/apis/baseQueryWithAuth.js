@@ -26,13 +26,26 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
         ? errorMessage.toLowerCase() 
         : '';
     
+    // Check if response indicates token expiration
+    // Handle cases where error is in result.error.data or result.data
+    const hasTokenExpiredMessage = errorMessageStr.includes('token expired');
+    const hasTokenExpiredInErrorData = result.error?.data && 
+        typeof result.error.data === 'object' && 
+        result.error.data.success === false && 
+        hasTokenExpiredMessage;
+    const hasTokenExpiredInData = result.data && 
+        typeof result.data === 'object' && 
+        result.data.success === false && 
+        hasTokenExpiredMessage;
+    
     const isTokenExpired = 
         (result.error && (
             result.error.status === 401 || 
             result.error.status === 405
         )) ||
-        (result.data && result.data.success === false && errorMessageStr.includes('token expired')) ||
-        (result.error && errorMessageStr.includes('token expired'));
+        hasTokenExpiredInErrorData ||
+        hasTokenExpiredInData ||
+        (result.error && hasTokenExpiredMessage);
 
     if (isTokenExpired && refreshToken) {
         try {
@@ -55,6 +68,36 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
                 api,
                 extraOptions
             );
+
+            // Check if refresh token call itself failed
+            const refreshErrorStatus = refreshResult.error?.status;
+            const refreshErrorData = refreshResult.error?.data || refreshResult.data;
+            const refreshErrorMessage = typeof refreshErrorData === 'object' 
+                ? (refreshErrorData.error || refreshErrorData.message || '')
+                : (refreshErrorData || '');
+            const refreshErrorMessageStr = typeof refreshErrorMessage === 'string' 
+                ? refreshErrorMessage.toLowerCase() 
+                : '';
+            
+            // Check for refresh token errors (404, 401, 400, or success: false)
+            const isRefreshTokenError = 
+                refreshErrorStatus === 404 || 
+                refreshErrorStatus === 401 || 
+                refreshErrorStatus === 400 ||
+                (refreshResult.data && refreshResult.data.success === false) ||
+                (refreshResult.error && refreshErrorMessageStr.includes('token'));
+
+            if (isRefreshTokenError) {
+                // Refresh token endpoint returned error, logout and clear storage
+                api.dispatch(logout());
+                // Clear any additional storage items if needed
+                if (typeof window !== 'undefined') {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/signin';
+                }
+                return refreshResult;
+            }
 
             if (refreshResult.data && refreshResult.data.success) {
                 // Update credentials with new tokens
@@ -80,21 +123,41 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
 
                 return retryResult;
             } else {
-                // Refresh token failed, logout
+                // Refresh token failed (other errors), logout and clear storage
                 api.dispatch(logout());
+                if (typeof window !== 'undefined') {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/signin';
+                }
                 return refreshResult.error ? refreshResult : result;
             }
         } catch (error) {
-            // If refresh fails, logout
+            // If refresh fails, logout and clear storage
             api.dispatch(logout());
+            if (typeof window !== 'undefined') {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/signin';
+            }
             return result;
         }
     } else if (isTokenExpired && !refreshToken) {
-        // Token expired but no refresh token available, logout
+        // Token expired but no refresh token available, logout and clear storage
         api.dispatch(logout());
+        if (typeof window !== 'undefined') {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/signin';
+        }
     } else if (result.error && result.error.status === 406) {
-        // 406 indicates refresh token expired or invalid
+        // 406 indicates refresh token expired or invalid, logout and clear storage
         api.dispatch(logout());
+        if (typeof window !== 'undefined') {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/signin';
+        }
     }
 
     return result;

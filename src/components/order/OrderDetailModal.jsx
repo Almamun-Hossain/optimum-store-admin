@@ -53,6 +53,26 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
                   </span>
                 </p>
               )}
+              {order.courierName && (
+                <p className="text-sm">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">
+                    Courier:
+                  </span>{" "}
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {order.courierName}
+                  </span>
+                </p>
+              )}
+              {order.courierTrackingNumber && (
+                <p className="text-sm">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">
+                    Tracking Number:
+                  </span>{" "}
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {order.courierTrackingNumber}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
 

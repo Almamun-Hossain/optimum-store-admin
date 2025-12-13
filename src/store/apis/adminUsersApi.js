@@ -119,6 +119,30 @@ export const adminUsersApi = createApi({
       },
       invalidatesTags: ["AdminUser"],
     }),
+
+    /**
+     * Assign role to admin user
+     * @param {Object} params - Assignment parameters
+     * @param {number} params.id - Admin user ID
+     * @param {number} params.roleId - Role ID to assign
+     */
+    assignRoleToAdminUser: builder.mutation({
+      query: ({ id, roleId }) => ({
+        url: `/api/v1/admin/users/${id}/role`,
+        method: "PUT",
+        body: { roleId },
+      }),
+      transformResponse: (response) => {
+        if (response.success) {
+          return response.data;
+        }
+        throw new Error(response.error || "Failed to assign role");
+      },
+      invalidatesTags: (result, error, { id }) => [
+        { type: "AdminUser", id },
+        "AdminUser",
+      ],
+    }),
   }),
 });
 
@@ -128,5 +152,6 @@ export const {
   useGetAdminUserByIdQuery,
   useUpdateAdminUserMutation,
   useDeleteAdminUserMutation,
+  useAssignRoleToAdminUserMutation,
 } = adminUsersApi;
 

@@ -30,7 +30,16 @@ export const shippingMethodsApi = createApi({
         }
         throw new Error(response.error || "Failed to fetch shipping methods");
       },
-      providesTags: ["ShippingMethod"],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.shippingMethods.map(({ id }) => ({
+                type: "ShippingMethod",
+                id,
+              })),
+              { type: "ShippingMethod", id: "LIST" },
+            ]
+          : [{ type: "ShippingMethod", id: "LIST" }],
     }),
 
     /**
@@ -92,7 +101,7 @@ export const shippingMethodsApi = createApi({
         }
         throw new Error(response.error || "Failed to create shipping method");
       },
-      invalidatesTags: ["ShippingMethod"],
+      invalidatesTags: [{ type: "ShippingMethod", id: "LIST" }],
     }),
 
     /**
@@ -115,7 +124,7 @@ export const shippingMethodsApi = createApi({
       },
       invalidatesTags: (result, error, { id }) => [
         { type: "ShippingMethod", id },
-        "ShippingMethod",
+        { type: "ShippingMethod", id: "LIST" },
       ],
     }),
 
@@ -134,7 +143,7 @@ export const shippingMethodsApi = createApi({
         }
         throw new Error(response.error || "Failed to delete shipping method");
       },
-      invalidatesTags: ["ShippingMethod"],
+      invalidatesTags: [{ type: "ShippingMethod", id: "LIST" }],
     }),
   }),
 });

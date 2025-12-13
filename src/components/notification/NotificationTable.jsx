@@ -1,6 +1,7 @@
 import React from "react";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
 import PermissionGuard from "../PermissionGuard";
+import EmptyState from "../shared/EmptyState";
 
 const NotificationTable = ({
   logs,
@@ -20,9 +21,11 @@ const NotificationTable = ({
 
   if (!logs || logs.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">No notification logs found</p>
-      </div>
+      <EmptyState
+        icon="bell"
+        title="No notification logs found"
+        message="No notification logs match your current filters. Try adjusting your search or filters."
+      />
     );
   }
 

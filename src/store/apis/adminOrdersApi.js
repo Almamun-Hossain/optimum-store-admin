@@ -64,6 +64,8 @@ export const adminOrdersApi = createApi({
      * @param {string} params.data.deliveryNotes - Delivery notes (optional)
      * @param {number} params.data.codAmount - COD amount (optional)
      * @param {boolean} params.data.codCollected - COD collected status (optional)
+     * @param {string} params.data.courierName - Courier service name (optional, e.g., "SteadFast", "Pathao", "SA Paribahan")
+     * @param {string} params.data.courierTrackingNumber - Tracking number from courier (optional)
      */
     updateOrder: builder.mutation({
       query: ({ id, ...data }) => ({

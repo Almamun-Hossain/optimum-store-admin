@@ -144,8 +144,8 @@ function NotificationLogsPage() {
       } catch (error) {
         toast.error(
           error?.data?.error ||
-            error?.message ||
-            "Failed to delete notification log"
+          error?.message ||
+          "Failed to delete notification log"
         );
       }
     }
@@ -166,8 +166,8 @@ function NotificationLogsPage() {
     } catch (error) {
       toast.error(
         error?.data?.error ||
-          error?.message ||
-          "Failed to save notification log"
+        error?.message ||
+        "Failed to save notification log"
       );
     }
   };
@@ -216,7 +216,7 @@ function NotificationLogsPage() {
                 <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
                   Notification Logs
                 </h1>
-                <PermissionGuard permission="notifications.create">
+                <PermissionGuard permission="notifications.send">
                   <button
                     onClick={handleCreate}
                     className="btn bg-violet-500 hover:bg-violet-600 text-white mt-4 sm:mt-0"
@@ -256,11 +256,11 @@ function NotificationLogsPage() {
                 logs={logs.filter((log) =>
                   searchTerm
                     ? log.recipient
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase()) ||
-                      log.template
-                        ?.toLowerCase()
-                        .includes(searchTerm.toLowerCase())
+                      ?.toLowerCase()
+                      .includes(searchTerm.toLowerCase()) ||
+                    log.template
+                      ?.toLowerCase()
+                      .includes(searchTerm.toLowerCase())
                     : true
                 )}
                 onEdit={handleEdit}

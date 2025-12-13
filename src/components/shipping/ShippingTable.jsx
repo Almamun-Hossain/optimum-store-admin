@@ -1,6 +1,7 @@
 import React from "react";
 import { FiEdit, FiTrash2, FiDollarSign } from "react-icons/fi";
 import PermissionGuard from "../PermissionGuard";
+import EmptyState from "../shared/EmptyState";
 
 const ShippingTable = ({
   shippingMethods,
@@ -20,9 +21,11 @@ const ShippingTable = ({
 
   if (!shippingMethods || shippingMethods.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">No shipping methods found</p>
-      </div>
+      <EmptyState
+        icon="truck"
+        title="No shipping methods found"
+        message="Get started by creating your first shipping method."
+      />
     );
   }
 

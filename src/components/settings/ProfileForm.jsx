@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { IoClose } from "react-icons/io5";
 
 // Validation schema
 const profileSchema = z.object({
@@ -11,10 +12,15 @@ const profileSchema = z.object({
 });
 
 function ProfileForm({ profile, onSubmit, isLoading }) {
+  const [serverErrors, setServerErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -24,8 +30,71 @@ function ProfileForm({ profile, onSubmit, isLoading }) {
     },
   });
 
+  // Sync server errors with react-hook-form
+  useEffect(() => {
+    Object.keys(serverErrors).forEach((field) => {
+      setError(field, {
+        type: "server",
+        message: serverErrors[field],
+      });
+    });
+  }, [serverErrors, setError]);
+
+  const handleFormSubmit = async (data) => {
+    setSubmitError(null);
+    setServerErrors({}); // Clear previous server errors
+    // Pass setServerErrors to parent handler
+    await onSubmit(data, setServerErrors);
+  };
+
+  // Clear server errors when user starts typing
+  const handleInputChange = (field) => {
+    if (serverErrors[field]) {
+      setServerErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+      clearErrors(field);
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+      {/* Server Error Alert */}
+      {submitError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                {submitError}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubmitError(null)}
+              className="ml-auto flex-shrink-0 text-red-400 hover:text-red-600 dark:hover:text-red-300"
+            >
+              <IoClose className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Personal Information Section */}
       <div>
         <div className="mb-6">
@@ -49,7 +118,9 @@ function ProfileForm({ profile, onSubmit, isLoading }) {
             <input
               id="fullName"
               type="text"
-              {...register("fullName")}
+              {...register("fullName", {
+                onChange: () => handleInputChange("fullName"),
+              })}
               className={`form-input w-full ${errors.fullName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
               placeholder="Enter your full name"
             />
@@ -71,7 +142,9 @@ function ProfileForm({ profile, onSubmit, isLoading }) {
             <input
               id="phone"
               type="tel"
-              {...register("phone")}
+              {...register("phone", {
+                onChange: () => handleInputChange("phone"),
+              })}
               className={`form-input w-full ${errors.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
               placeholder="01712345678"
             />
@@ -93,7 +166,9 @@ function ProfileForm({ profile, onSubmit, isLoading }) {
             <input
               id="email"
               type="email"
-              {...register("email")}
+              {...register("email", {
+                onChange: () => handleInputChange("email"),
+              })}
               className={`form-input w-full ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
               placeholder="your.email@example.com"
             />

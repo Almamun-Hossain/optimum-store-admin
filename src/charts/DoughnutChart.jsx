@@ -26,8 +26,40 @@ function DoughnutChart({
   const { tooltipTitleColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor } = chartColors; 
 
   useEffect(() => {
+    // Don't create chart if data is null or canvas is not available
+    if (!data || !canvas.current) {
+      if (chart) {
+        try {
+          chart.destroy();
+        } catch (error) {
+          // Ignore errors
+        }
+        setChart(null);
+      }
+      return;
+    }
+
     const ctx = canvas.current;
-    // eslint-disable-next-line no-unused-vars
+    if (!ctx) return;
+
+    // If chart exists, update it instead of recreating
+    if (chart) {
+      try {
+        chart.data = data;
+        chart.update();
+        return;
+      } catch (error) {
+        // If update fails, destroy and recreate
+        try {
+          chart.destroy();
+        } catch (destroyError) {
+          // Ignore errors
+        }
+        setChart(null);
+      }
+    }
+
+    // Create new chart instance
     const newChart = new Chart(ctx, {
       type: 'doughnut',
       data: data,
@@ -105,13 +137,23 @@ function DoughnutChart({
       ],
     });
     setChart(newChart);
-    return () => newChart.destroy();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    // Cleanup function
+    return () => {
+      if (newChart) {
+        try {
+          newChart.destroy();
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+  }, [data, darkMode, tooltipTitleColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor]);
 
   useEffect(() => {
-    if (!chart) return;
+    if (!chart || !canvas.current) return;
 
+    try {
     if (darkMode) {
       chart.options.plugins.tooltip.titleColor = tooltipTitleColor.dark;
       chart.options.plugins.tooltip.bodyColor = tooltipBodyColor.dark;
@@ -124,7 +166,29 @@ function DoughnutChart({
       chart.options.plugins.tooltip.borderColor = tooltipBorderColor.light;
     }
     chart.update('none');
-  }, [currentTheme]);
+    } catch (error) {
+      // Ignore errors if chart is being destroyed
+      console.warn('Chart update error:', error);
+    }
+  }, [chart, currentTheme, darkMode, tooltipTitleColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (chart) {
+        try {
+          chart.destroy();
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+  }, [chart]);
+
+  // Don't render canvas if data is not available
+  if (!data) {
+    return null;
+  }
 
   return (
     <div className="grow flex flex-col justify-center">

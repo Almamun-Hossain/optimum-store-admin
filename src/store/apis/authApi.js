@@ -90,7 +90,7 @@ export const authApi = createApi({
       queryFn: async (data, { getState }, extraOptions) => {
         const result = await baseQueryWithAuthCheck(
           {
-            url: "/api/v1/admin/auth/change-password",
+            url: "/api/v1/admin/profile/change-password",
             method: "PATCH",
             body: data,
           },
@@ -174,6 +174,57 @@ export const authApi = createApi({
         };
       },
     }),
+    /**
+     * Request admin password reset (forgot password)
+     * POST /api/v1/admin/auth/request-password-reset
+     */
+    requestPasswordReset: builder.mutation({
+      query: (data) => ({
+        url: "/api/v1/admin/auth/request-password-reset",
+        method: "POST",
+        body: data,
+      }),
+      transformResponse: (response) => {
+        if (response.success) {
+          return response.data;
+        }
+        throw new Error(response.error || "Failed to request password reset");
+      },
+    }),
+    /**
+     * Reset admin password with OTP
+     * POST /api/v1/admin/auth/reset-password
+     */
+    resetPassword: builder.mutation({
+      query: (data) => ({
+        url: "/api/v1/admin/auth/reset-password",
+        method: "POST",
+        body: data,
+      }),
+      transformResponse: (response) => {
+        if (response.success) {
+          return response.data;
+        }
+        throw new Error(response.error || "Failed to reset password");
+      },
+    }),
+    /**
+     * Resend admin reset OTP
+     * POST /api/v1/admin/auth/resend-reset-otp
+     */
+    resendResetOtp: builder.mutation({
+      query: (data) => ({
+        url: "/api/v1/admin/auth/resend-reset-otp",
+        method: "POST",
+        body: data,
+      }),
+      transformResponse: (response) => {
+        if (response.success) {
+          return response.data;
+        }
+        throw new Error(response.error || "Failed to resend OTP");
+      },
+    }),
   }),
 });
 
@@ -184,4 +235,7 @@ export const {
   useChangePasswordMutation,
   useGetProfileQuery,
   useUpdateProfileMutation,
+  useRequestPasswordResetMutation,
+  useResetPasswordMutation,
+  useResendResetOtpMutation,
 } = authApi;
