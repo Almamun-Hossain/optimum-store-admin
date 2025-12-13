@@ -15,6 +15,7 @@ import ToasterWrapper from "../layout/ToasterWrapper";
 import PermissionGuard from "../components/PermissionGuard";
 import RoleForm from "../components/role/RoleForm";
 import PermissionAssignmentModal from "../components/role/PermissionAssignmentModal";
+import EmptyState from "../components/shared/EmptyState";
 
 function RolesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -201,11 +202,21 @@ function RolesPage() {
                     </p>
                   </div>
                 ) : roles.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      No roles found
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon="shield"
+                    title="No roles found"
+                    message="Get started by creating your first role."
+                    action={
+                      <PermissionGuard permission="roles.create">
+                        <button
+                          onClick={handleOpenModal}
+                          className="btn bg-violet-500 hover:bg-violet-600 text-white"
+                        >
+                          Create First Role
+                        </button>
+                      </PermissionGuard>
+                    }
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="table-auto w-full">

@@ -14,7 +14,9 @@ import GlobalModal from "../components/GlobalModal";
 import ToasterWrapper from "../layout/ToasterWrapper";
 import PermissionGuard from "../components/PermissionGuard";
 import PermissionForm from "../components/permission/PermissionForm";
+import PermissionsTable from "../components/permission/PermissionsTable";
 import RolesForPermissionModal from "../components/permission/RolesForPermissionModal";
+import EmptyState from "../components/shared/EmptyState";
 
 function PermissionsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,11 +29,33 @@ function PermissionsPage() {
     module: "",
   });
 
+  // Available modules based on the permission list
+  // Note: "users" module is displayed as "Customers" in the frontend
+  const availableModules = [
+    { value: "admin_users", label: "Admin Users" },
+    { value: "audit_logs", label: "Audit Logs" },
+    { value: "categories", label: "Categories" },
+    { value: "dashboard", label: "Dashboard" },
+    { value: "inventory", label: "Inventory" },
+    { value: "notifications", label: "Notifications" },
+    { value: "orders", label: "Orders" },
+    { value: "payments", label: "Payments" },
+    { value: "permissions", label: "Permissions" },
+    { value: "preorders", label: "Preorders" },
+    { value: "products", label: "Products" },
+    { value: "reports", label: "Reports" },
+    { value: "roles", label: "Roles" },
+    { value: "settings", label: "Settings" },
+    { value: "shipping", label: "Shipping" },
+    { value: "users", label: "Customers" }, // "users" module displayed as "Customers"
+  ];
+
   const filterConfig = [
     {
       key: "module",
-      type: "text",
+      type: "select",
       label: "Module",
+      options: [{ value: "", label: "All Modules" }, ...availableModules],
     },
   ];
 
@@ -181,7 +205,7 @@ function PermissionsPage() {
                 <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
                   Permissions Management
                 </h1>
-                <PermissionGuard permission="permissions.create">
+                <PermissionGuard permission="permissions.manage">
                   <button
                     onClick={handleCreate}
                     className="btn bg-violet-500 hover:bg-violet-600 text-white mt-4 sm:mt-0"
@@ -197,6 +221,34 @@ function PermissionsPage() {
                     <span className="ml-2">Add Permission</span>
                   </button>
                 </PermissionGuard>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Permissions</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {meta.total || permissions.length}
+                  </p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Modules</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {Object.keys(permissionsByModule).length}
+                  </p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Current Page</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {permissions.length}
+                  </p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Filtered</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    {filters.module ? "Yes" : "No"}
+                  </p>
+                </div>
               </div>
 
               <FilterPanel
@@ -217,93 +269,29 @@ function PermissionsPage() {
                     </p>
                   </div>
                 ) : permissions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      No permissions found
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon="shield"
+                    title="No permissions found"
+                    message="Get started by creating your first permission or adjust your filters."
+                    action={
+                      <PermissionGuard permission="permissions.manage">
+                        <button
+                          onClick={handleCreate}
+                          className="btn bg-violet-500 hover:bg-violet-600 text-white"
+                        >
+                          Create Permission
+                        </button>
+                      </PermissionGuard>
+                    }
+                  />
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="table-auto w-full">
-                      <thead className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
-                        <tr>
-                          <th className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-left">Name</div>
-                          </th>
-                          <th className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-left">Module</div>
-                          </th>
-                          <th className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-left">Action</div>
-                          </th>
-                          <th className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-left">Description</div>
-                          </th>
-                          <th className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-left">Roles</div>
-                          </th>
-                          <th className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                            <div className="font-semibold text-left">Actions</div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-sm divide-y divide-gray-100 dark:divide-gray-700">
-                        {permissions.map((permission) => (
-                          <tr key={permission.id}>
-                            <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                              <div className="text-gray-800 dark:text-gray-100 font-medium">
-                                {permission.name}
-                              </div>
-                            </td>
-                            <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                              <div className="text-gray-800 dark:text-gray-100">
-                                {permission.module}
-                              </div>
-                            </td>
-                            <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                              <div className="text-gray-800 dark:text-gray-100">
-                                {permission.action}
-                              </div>
-                            </td>
-                            <td className="px-2 first:pl-5 last:pr-5 py-3">
-                              <div className="text-gray-600 dark:text-gray-400">
-                                {permission.description || "—"}
-                              </div>
-                            </td>
-                            <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                              <div className="text-gray-800 dark:text-gray-100">
-                                {permission._count?.roles || 0}
-                              </div>
-                            </td>
-                            <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleViewRoles(permission)}
-                                  className="btn-xs bg-blue-500 hover:bg-blue-600 text-white"
-                                  title="View/Manage Roles"
-                                >
-                                  Roles
-                                </button>
-                                <button
-                                  onClick={() => handleEdit(permission)}
-                                  className="btn-xs bg-violet-500 hover:bg-violet-600 text-white"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(permission.id)}
-                                  className="btn-xs bg-red-500 hover:bg-red-600 text-white"
-                                  disabled={isDeleting}
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <PermissionsTable
+                    permissionsByModule={permissionsByModule}
+                    onViewRoles={handleViewRoles}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isDeleting={isDeleting}
+                  />
                 )}
               </div>
 

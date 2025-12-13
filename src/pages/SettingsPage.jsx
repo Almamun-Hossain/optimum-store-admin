@@ -22,9 +22,15 @@ function SettingsPage() {
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
 
-  const handleProfileUpdate = async (data) => {
+  const handleProfileUpdate = async (data, setServerErrors) => {
     try {
       const result = await updateProfile(data).unwrap();
+      
+      // Clear any server errors on success
+      if (setServerErrors) {
+        setServerErrors({});
+      }
+      
       toast.success("Profile updated successfully");
       
       // Update auth state with new user data
@@ -39,9 +45,49 @@ function SettingsPage() {
       
       refetch();
     } catch (error) {
-      toast.error(
-        error?.data?.error || error?.message || "Failed to update profile"
-      );
+      // Handle validation errors from API
+      const errorData = error?.data;
+      
+      // Check if error is an array of field errors
+      if (Array.isArray(errorData?.error)) {
+        const fieldErrors = {};
+        errorData.error.forEach((err) => {
+          if (err.field && err.message) {
+            fieldErrors[err.field] = err.message;
+          }
+        });
+        
+        // Set server errors in form
+        if (setServerErrors) {
+          setServerErrors(fieldErrors);
+        }
+        
+        // Show toast with first error or general message
+        const firstError = errorData.error[0];
+        if (firstError?.message) {
+          toast.error(firstError.message);
+        } else {
+          toast.error("Please fix the validation errors");
+        }
+      } else {
+        // Handle general errors (string or object)
+        let errorMessage = "Failed to update profile";
+        
+        if (typeof errorData?.error === 'string') {
+          errorMessage = errorData.error;
+        } else if (errorData?.message) {
+          errorMessage = errorData.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        toast.error(errorMessage);
+        
+        // Clear server errors for general errors
+        if (setServerErrors) {
+          setServerErrors({});
+        }
+      }
     }
   };
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import PermissionGuard from "../PermissionGuard";
+import EmptyState from "../shared/EmptyState";
 
 const AdminUserTable = ({
   adminUsers,
@@ -19,9 +20,11 @@ const AdminUserTable = ({
 
   if (!adminUsers || adminUsers.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">No admin users found</p>
-      </div>
+      <EmptyState
+        icon="users"
+        title="No admin users found"
+        message="Get started by creating your first admin user or adjust your filters."
+      />
     );
   }
 

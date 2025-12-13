@@ -12,6 +12,8 @@ import AuthStateSync from "./components/AuthStateSync";
 // Import pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const SignIn = React.lazy(() => import("./pages/SignIn"));
+const RequestPasswordReset = React.lazy(() => import("./pages/RequestPasswordReset"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 const ProtectedRoute = React.lazy(() => import("./components/ProtectedRoute"));
 const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
 const ProductsPage = React.lazy(() => import("./pages/ProductsPage"));
@@ -26,6 +28,7 @@ const RolesPage = React.lazy(() => import("./pages/RolesPage"));
 const PermissionsPage = React.lazy(() => import("./pages/PermissionsPage"));
 const PaymentsPage = React.lazy(() => import("./pages/PaymentsPage"));
 const PreordersPage = React.lazy(() => import("./pages/PreordersPage"));
+const AuditLogsPage = React.lazy(() => import("./pages/AuditLogsPage"));
 
 function App() {
   const location = useLocation();
@@ -43,6 +46,8 @@ function App() {
           <PageTransition>
             <Routes location={location} key={location.pathname}>
             <Route path="/signin" element={<SignIn />} />
+            <Route path="/reset-password/request" element={<RequestPasswordReset />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/"
               element={
@@ -152,6 +157,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PreordersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit-logs"
+              element={
+                <ProtectedRoute>
+                  <AuditLogsPage />
                 </ProtectedRoute>
               }
             />

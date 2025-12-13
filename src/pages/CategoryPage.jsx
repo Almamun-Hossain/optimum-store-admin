@@ -17,6 +17,7 @@ import useCategory from "../hooks/useCategory";
 import ToasterWrapper from "../layout/ToasterWrapper";
 import { FaFolderOpen, FaInfoCircle, FaGripVertical } from "react-icons/fa";
 import PermissionGuard from "../components/PermissionGuard";
+import EmptyState from "../components/shared/EmptyState";
 
 function CategoryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -226,54 +227,36 @@ function CategoryPage() {
                       {/* Tree Content */}
                       <div className="p-6 min-h-[400px]">
                         {showEmptyState ? (
-                          <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                              <FaFolderOpen className="w-10 h-10 text-gray-400 dark:text-gray-500" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
-                              No categories yet
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-                              Get started by creating your first category. You
-                              can organize them hierarchically and drag to
-                              reorder.
-                            </p>
-                            <button
-                              onClick={() => {
-                                setSelectedCategory(null);
-                                setIsFormOpen(true);
-                              }}
-                              className="btn bg-violet-500 hover:bg-violet-600 text-white"
-                            >
-                              <svg
-                                className="w-4 h-4 fill-current shrink-0"
-                                viewBox="0 0 16 16"
+                          <EmptyState
+                            icon="folder"
+                            title="No categories yet"
+                            message="Get started by creating your first category. You can organize them hierarchically and drag to reorder."
+                            action={
+                              <button
+                                onClick={() => {
+                                  setSelectedCategory(null);
+                                  setIsFormOpen(true);
+                                }}
+                                className="btn bg-violet-500 hover:bg-violet-600 text-white"
                               >
-                                <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                              </svg>
-                              <span className="ml-2">Create First Category</span>
-                            </button>
-                          </div>
+                                <svg
+                                  className="w-4 h-4 fill-current shrink-0"
+                                  viewBox="0 0 16 16"
+                                >
+                                  <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                                </svg>
+                                <span className="ml-2">Create First Category</span>
+                              </button>
+                            }
+                          />
                         ) : showNoResults ? (
-                          <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                              <FaFolderOpen className="w-10 h-10 text-gray-400 dark:text-gray-500" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
-                              No results found
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-                              No categories match your search term "
-                              <span className="font-medium">{searchTerm}</span>
-                              ". Try a different search term.
-                            </p>
-                            <button
-                              onClick={() => setSearchTerm("")}
-                              className="btn border-gray-200 hover:border-gray-300 text-gray-600 dark:text-gray-300"
-                            >
-                              Clear Search
-                            </button>
-                          </div>
+                          <EmptyState
+                            icon="folder"
+                            title="No results found"
+                            message={`No categories match your search term "${searchTerm}". Try a different search term.`}
+                            searchTerm={searchTerm}
+                            onClearSearch={() => setSearchTerm("")}
+                          />
                         ) : (
                           <DndProvider backend={HTML5Backend}>
                             <CategoryTree

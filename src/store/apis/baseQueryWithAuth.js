@@ -56,6 +56,23 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
                 extraOptions
             );
 
+            // Check if refresh token call itself failed with 404, 401, or 400
+            const refreshErrorStatus = refreshResult.error?.status;
+            const isRefreshTokenError = 
+                refreshErrorStatus === 404 || 
+                refreshErrorStatus === 401 || 
+                refreshErrorStatus === 400;
+
+            if (isRefreshTokenError) {
+                // Refresh token endpoint returned error, logout and redirect
+                api.dispatch(logout());
+                // Redirect to signin page
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/signin';
+                }
+                return refreshResult;
+            }
+
             if (refreshResult.data && refreshResult.data.success) {
                 // Update credentials with new tokens
                 api.dispatch(
@@ -80,21 +97,33 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
 
                 return retryResult;
             } else {
-                // Refresh token failed, logout
+                // Refresh token failed (other errors), logout and redirect
                 api.dispatch(logout());
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/signin';
+                }
                 return refreshResult.error ? refreshResult : result;
             }
         } catch (error) {
-            // If refresh fails, logout
+            // If refresh fails, logout and redirect
             api.dispatch(logout());
+            if (typeof window !== 'undefined') {
+                window.location.href = '/signin';
+            }
             return result;
         }
     } else if (isTokenExpired && !refreshToken) {
-        // Token expired but no refresh token available, logout
+        // Token expired but no refresh token available, logout and redirect
         api.dispatch(logout());
+        if (typeof window !== 'undefined') {
+            window.location.href = '/signin';
+        }
     } else if (result.error && result.error.status === 406) {
-        // 406 indicates refresh token expired or invalid
+        // 406 indicates refresh token expired or invalid, logout and redirect
         api.dispatch(logout());
+        if (typeof window !== 'undefined') {
+            window.location.href = '/signin';
+        }
     }
 
     return result;

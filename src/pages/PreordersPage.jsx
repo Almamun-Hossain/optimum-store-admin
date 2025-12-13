@@ -14,6 +14,7 @@ import GlobalModal from "../components/GlobalModal";
 import ToasterWrapper from "../layout/ToasterWrapper";
 import PermissionGuard from "../components/PermissionGuard";
 import PreorderForm from "../components/preorder/PreorderForm";
+import EmptyState from "../components/shared/EmptyState";
 
 function PreordersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -209,11 +210,16 @@ function PreordersPage() {
                     </p>
                   </div>
                 ) : preorders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      No preorders found
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon="cart"
+                    title="No preorders found"
+                    message="No preorders match your current filters. Try adjusting your search or filters."
+                    hasFilters={Object.values(filters).some(v => v !== "")}
+                    onClearFilters={() => {
+                      setFilters({ isActive: "", variantId: "" });
+                      setCurrentPage(1);
+                    }}
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="table-auto w-full">

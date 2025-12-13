@@ -114,7 +114,8 @@ function ShippingMethodsPage() {
       }
       setIsFormOpen(false);
       setSelectedMethod(null);
-      refetch();
+      // Refetch the query to get updated data
+      await refetch();
     } catch (error) {
       toast.error(
         error?.data?.error || error?.message || "Failed to save shipping method"

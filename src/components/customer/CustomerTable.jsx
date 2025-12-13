@@ -1,6 +1,7 @@
 import React from "react";
 import { FiEdit3 } from "react-icons/fi";
 import PermissionGuard from "../PermissionGuard";
+import EmptyState from "../shared/EmptyState";
 
 const CustomerTable = ({ customers, onEdit, isLoading }) => {
   if (isLoading) {
@@ -14,9 +15,11 @@ const CustomerTable = ({ customers, onEdit, isLoading }) => {
 
   if (!customers || customers.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">No customers found</p>
-      </div>
+      <EmptyState
+        icon="users"
+        title="No customers found"
+        message="Get started by adding your first customer or adjust your filters."
+      />
     );
   }
 

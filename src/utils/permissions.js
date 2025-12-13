@@ -5,6 +5,10 @@
  * Permissions are stored in the Redux auth state after login.
  * 
  * Permission format: "module.action" (e.g., "products.create", "orders.view")
+ * 
+ * IMPORTANT: The "users" module in permissions is displayed as "Customers" 
+ * in the frontend UI for better user experience. All permission checks should
+ * use "users" as the module name (e.g., "users.view", "users.create").
  */
 
 /**
@@ -96,5 +100,57 @@ export const hasRole = (state, roleName) => {
   if (!roleName) return false;
   const role = getUserRole(state);
   return role?.name === roleName;
+};
+
+/**
+ * Get all available modules from permissions
+ * @param {Object} state - Redux state
+ * @returns {Array<string>} Array of unique module names
+ */
+export const getAvailableModules = (state) => {
+  const permissions = getPermissions(state);
+  const modules = new Set();
+  permissions.forEach((p) => {
+    const permName = p.name || p;
+    const parts = permName.split(".");
+    if (parts.length > 0) {
+      modules.add(parts[0]);
+    }
+  });
+  return Array.from(modules).sort();
+};
+
+/**
+ * Get all permissions for a specific module
+ * @param {Object} state - Redux state
+ * @param {string} moduleName - Module name (e.g., 'products')
+ * @returns {Array} Array of permission objects for the module
+ */
+export const getModulePermissions = (state, moduleName) => {
+  if (!moduleName) return [];
+  const permissions = getPermissions(state);
+  return permissions.filter((p) => {
+    const permName = p.name || p;
+    return permName.startsWith(`${moduleName}.`);
+  });
+};
+
+/**
+ * Get all available actions for a module
+ * @param {Object} state - Redux state
+ * @param {string} moduleName - Module name (e.g., 'products')
+ * @returns {Array<string>} Array of action names
+ */
+export const getModuleActions = (state, moduleName) => {
+  const modulePermissions = getModulePermissions(state, moduleName);
+  const actions = new Set();
+  modulePermissions.forEach((p) => {
+    const permName = p.name || p;
+    const parts = permName.split(".");
+    if (parts.length > 1) {
+      actions.add(parts[1]);
+    }
+  });
+  return Array.from(actions).sort();
 };
 

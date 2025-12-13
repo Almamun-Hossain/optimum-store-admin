@@ -13,6 +13,7 @@ import FilterPanel from "../components/shared/FilterPanel";
 import Pagination from "../components/shared/Pagination";
 import ToasterWrapper from "../layout/ToasterWrapper";
 import PermissionGuard from "../components/PermissionGuard";
+import EmptyState from "../components/shared/EmptyState";
 
 function PaymentsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -259,11 +260,22 @@ function PaymentsPage() {
                     </p>
                   </div>
                 ) : payments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      No payments found
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon="card"
+                    title="No payments found"
+                    message="No payments match your current filters. Try adjusting your search or filters."
+                    hasFilters={Object.values(filters).some(v => v !== "") || searchTerm !== ""}
+                    searchTerm={searchTerm}
+                    onClearFilters={() => {
+                      setFilters({ method: "", status: "", orderId: "", startDate: "", endDate: "" });
+                      setSearchTerm("");
+                      setCurrentPage(1);
+                    }}
+                    onClearSearch={() => {
+                      setSearchTerm("");
+                      setCurrentPage(1);
+                    }}
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="table-auto w-full">

@@ -49,8 +49,12 @@ function RolePermissionsView({ profile }) {
     return acc;
   }, {});
 
-  // Sort modules alphabetically
-  const sortedModules = Object.keys(permissionsByModule).sort();
+  // Sort modules alphabetically, but treat "users" as "customers" for sorting
+  const sortedModules = Object.keys(permissionsByModule).sort((a, b) => {
+    const aName = a === "users" ? "customers" : a;
+    const bName = b === "users" ? "customers" : b;
+    return aName.localeCompare(bName);
+  });
 
   return (
     <div className="space-y-6">
@@ -126,7 +130,7 @@ function RolePermissionsView({ profile }) {
             >
               <div className="bg-gray-50 dark:bg-gray-900/50 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-                  {module.replace("_", " ")}
+                  {module === "users" ? "Customers" : module.replace(/_/g, " ")}
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {permissionsByModule[module].length} permission

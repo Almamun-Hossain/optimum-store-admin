@@ -105,10 +105,13 @@ function PermissionAssignmentModal({ role, isOpen, onClose }) {
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="max-h-96 overflow-y-auto">
-            {Object.entries(permissionsByModule).map(([module, perms]) => (
+            {Object.entries(permissionsByModule).map(([module, perms]) => {
+              // Display "users" module as "Customers" in the frontend
+              const displayModuleName = module === "users" ? "Customers" : module.replace(/_/g, " ");
+              return (
               <div key={module} className="mb-6">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 uppercase">
-                  {module}
+                  {displayModuleName}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {perms.map((perm) => {
@@ -148,7 +151,8 @@ function PermissionAssignmentModal({ role, isOpen, onClose }) {
                   })}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

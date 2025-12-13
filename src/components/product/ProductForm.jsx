@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,60 +6,63 @@ import { toast } from "react-hot-toast";
 import { useSelector } from "react-redux";
 import CategorySelect from "../category/CategorySelect";
 import useCategory from "../../hooks/useCategory";
-import { FaPlusCircle } from "react-icons/fa";
-import { FaRegTrashCan } from "react-icons/fa6";
+import { FaPlusCircle, FaTrash, FaInfoCircle } from "react-icons/fa";
+import { IoClose } from "react-icons/io5";
+import VariantAttributes from "./VariantAttributes";
 
 const productSchema = z.object({
   categoryId: z.number().min(1, "Category is required"),
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  brand: z.string().optional(),
-  skuPrefix: z.string().min(1, "SKU Prefix is required"),
-  specifications: z.string().optional(),
+  name: z.string().min(1, "Name is required").max(200, "Name must be less than 200 characters"),
+  description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
+  brand: z.string().max(100, "Brand must be less than 100 characters").optional(),
+  skuPrefix: z.string().min(1, "SKU Prefix is required").max(50, "SKU Prefix must be less than 50 characters"),
+  specifications: z.string().max(2000, "Specifications must be less than 2000 characters").optional(),
   isActive: z.boolean().default(true),
-  variants: z.array(
-    z
-      .object({
-        id: z.number().optional(),
-        sku: z.string().min(1, "SKU is required"),
-        basePrice: z.number().min(0, "Base Price is required"),
-        salePrice: z
-          .number()
-          .min(0, "Sale Price must be 0 or greater")
-          .optional()
-          .nullable(),
-        isActive: z.boolean().default(true),
-        weight: z.number().optional(),
-        length: z.number().optional(),
-        width: z.number().optional(),
-        height: z.number().optional(),
-        attributes: z.array(
-          z.object({
-            id: z.number().optional(),
-            attributeType: z.string().min(1, "Attribute Type is required"),
-            attributeValue: z.string().min(1, "Attribute Value is required"),
-          })
-        ),
-      })
-      .refine(
-        (data) => {
-          // If salePrice is 0, null, or undefined, it's valid
-          if (!data.salePrice) return true;
-          // Check if salePrice is less than or equal to basePrice
-          return data.salePrice < data.basePrice;
-        },
-        {
-          message: "Sale price cannot be greater than base price",
-          path: ["salePrice"], // This will make the error show up on the salePrice field
-        }
-      )
-  ),
+  variants: z
+    .array(
+      z
+        .object({
+          id: z.number().optional(),
+          sku: z.string().min(1, "SKU is required").max(100, "SKU must be less than 100 characters"),
+          basePrice: z.number().min(0.01, "Base Price must be greater than 0"),
+          salePrice: z
+            .number()
+            .min(0, "Sale Price must be 0 or greater")
+            .optional()
+            .nullable(),
+          isActive: z.boolean().default(true),
+          weight: z.number().min(0, "Weight cannot be negative").optional(),
+          length: z.number().min(0, "Length cannot be negative").optional(),
+          width: z.number().min(0, "Width cannot be negative").optional(),
+          height: z.number().min(0, "Height cannot be negative").optional(),
+          attributes: z
+            .array(
+              z.object({
+                id: z.number().optional(),
+                attributeType: z.string().min(1, "Attribute Type is required"),
+                attributeValue: z.string().min(1, "Attribute Value is required"),
+              })
+            )
+            .min(1, "At least one attribute is required"),
+        })
+        .refine(
+          (data) => {
+            if (!data.salePrice || data.salePrice === 0) return true;
+            return data.salePrice <= data.basePrice;
+          },
+          {
+            message: "Sale price must be less than or equal to base price",
+            path: ["salePrice"],
+          }
+        )
+    )
+    .min(1, "At least one variant is required"),
 });
 
-const ProductForm = ({ product, onClose, onSubmit }) => {
+const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
   const { categories } = useSelector((state) => state.category);
-
   const { categoriesLoading } = useCategory();
+  const [submitError, setSubmitError] = useState(null);
 
   const {
     register,
@@ -68,29 +71,46 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
     control,
     watch,
     setValue,
-    getValues,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: product
       ? {
           ...product,
-          variants: product.variants.map((variant) => ({
-            id: variant.id,
-            sku: variant.sku,
-            basePrice: variant.basePrice,
-            salePrice: variant.salePrice || 0,
-            isActive: variant.isActive,
-            weight: variant.weight || 0,
-            length: variant.length || 0,
-            width: variant.width || 0,
-            height: variant.height || 0,
-            attributes: variant.attributes.map((attr) => ({
-              id: attr.id,
-              attributeType: attr.attributeType,
-              attributeValue: attr.attributeValue,
-            })),
-          })),
+          variants:
+            product.variants && product.variants.length > 0
+              ? product.variants.map((variant) => ({
+                  id: variant.id,
+                  sku: variant.sku,
+                  basePrice: variant.basePrice,
+                  salePrice: variant.salePrice || null,
+                  isActive: variant.isActive,
+                  weight: variant.weight || null,
+                  length: variant.length || null,
+                  width: variant.width || null,
+                  height: variant.height || null,
+                  attributes:
+                    variant.attributes && variant.attributes.length > 0
+                      ? variant.attributes.map((attr) => ({
+                          id: attr.id,
+                          attributeType: attr.attributeType,
+                          attributeValue: attr.attributeValue,
+                        }))
+                      : [{ attributeType: "", attributeValue: "" }],
+                }))
+              : [
+                  {
+                    sku: "",
+                    basePrice: 0,
+                    salePrice: null,
+                    isActive: true,
+                    weight: null,
+                    length: null,
+                    width: null,
+                    height: null,
+                    attributes: [{ attributeType: "", attributeValue: "" }],
+                  },
+                ],
         }
       : {
           categoryId: 0,
@@ -104,12 +124,12 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
             {
               sku: "",
               basePrice: 0,
-              salePrice: 0,
+              salePrice: null,
               isActive: true,
-              weight: 0,
-              length: 0,
-              width: 0,
-              height: 0,
+              weight: null,
+              length: null,
+              width: null,
+              height: null,
               attributes: [{ attributeType: "", attributeValue: "" }],
             },
           ],
@@ -125,417 +145,472 @@ const ProductForm = ({ product, onClose, onSubmit }) => {
     name: "variants",
   });
 
-  const variantAttributesArray = variantFields.map((_, index) =>
-    useFieldArray({
-      control,
-      name: `variants.${index}.attributes`,
-    })
-  );
-
   const onFormSubmit = async (data) => {
+    setSubmitError(null);
     try {
-      await onSubmit(data);
-      toast.success("Product added successfully!");
+      // Clean up data before submission
+      const cleanedData = {
+        ...data,
+        variants: data.variants.map((variant) => ({
+          ...variant,
+          salePrice: variant.salePrice && variant.salePrice > 0 ? variant.salePrice : null,
+          weight: variant.weight && variant.weight > 0 ? variant.weight : null,
+          length: variant.length && variant.length > 0 ? variant.length : null,
+          width: variant.width && variant.width > 0 ? variant.width : null,
+          height: variant.height && variant.height > 0 ? variant.height : null,
+        })),
+      };
+      await onSubmit(cleanedData);
       reset();
+      onClose();
     } catch (error) {
-      toast.error("Error adding product");
+      const errorMessage =
+        error?.data?.message ||
+        error?.message ||
+        "Failed to save product. Please try again.";
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
-  const onFormError = (error) => {
-    console.log(error);
+  const onFormError = (errors) => {
+    const firstError = Object.values(errors)[0];
+    if (firstError?.message) {
+      toast.error(firstError.message);
+    } else {
+      toast.error("Please fix the form errors before submitting");
+    }
+    // Scroll to first error
+    const firstErrorField = document.querySelector('[data-error="true"]');
+    if (firstErrorField) {
+      firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const getFieldError = (fieldPath) => {
+    const keys = fieldPath.split(".");
+    let error = errors;
+    for (const key of keys) {
+      error = error?.[key];
+      if (!error) return null;
+    }
+    return error?.message;
   };
 
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit, onFormError)}
-      className="w-full mx-auto space-y-4"
+      className="w-full mx-auto space-y-6 h-full px-1"
     >
-      <div>
-        <label
-          className="block text-sm font-medium text-gray-700"
-          htmlFor="categoryId"
-        >
-          Category
-        </label>
-        <CategorySelect
-          categories={categories}
-          value={watch("categoryId")}
-          onChange={(value) => setValue("categoryId", value)}
-          isDisabled={categoriesLoading}
-        />
-      </div>
-      <div>
-        <label
-          className="block text-sm font-medium text-gray-700"
-          htmlFor="name"
-        >
-          Product Name
-        </label>
-        <input
-          type="text"
-          {...register("name")}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label
-            className="block text-sm font-medium text-gray-700"
-            htmlFor="brand"
-          >
-            Brand
-          </label>
-          <input
-            type="text"
-            {...register("brand")}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-          />
-        </div>
-        <div>
-          <label
-            className="block text-sm font-medium text-gray-700"
-            htmlFor="skuPrefix"
-          >
-            SKU Prefix
-          </label>
-          <input
-            type="text"
-            {...register("skuPrefix")}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-          />
-        </div>
-      </div>
-      <div>
-        <label
-          className="block text-sm font-medium text-gray-700"
-          htmlFor="description"
-        >
-          Description
-        </label>
-        <textarea
-          {...register("description")}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-          rows="3"
-        ></textarea>
-      </div>
-
-      <div>
-        <label
-          className="block text-sm font-medium text-gray-700"
-          htmlFor="specifications"
-        >
-          Specifications
-        </label>
-        <textarea
-          {...register("specifications")}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-          rows="3"
-        ></textarea>
-      </div>
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          {...register("isActive")}
-          className="h-4 w-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
-        />
-        <label className="ml-2 block text-sm text-gray-700">Active</label>
-      </div>
-
-      <h3 className="text-lg font-semibold text-gray-800">Variants</h3>
-      {variantFields.map((variant, index) => (
-        <div
-          key={variant.id}
-          className="border p-4 mb-4 rounded-lg shadow-sm bg-gray-50 space-y-4"
-        >
-          <div className="flex items-center gap-3">
-            <h4 className="text-md font-semibold text-gray-800">
-              Variant {index + 1}
-            </h4>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                {...register(`variants.${index}.isActive`)}
-                className="h-4 w-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.sku`}
-              >
-                SKU
-              </label>
-              <input
-                type="text"
-                {...register(`variants.${index}.sku`)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.sku && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.sku?.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.basePrice`}
-              >
-                Base Price
-              </label>
-              <input
-                type="number"
-                {...register(`variants.${index}.basePrice`, {
-                  valueAsNumber: true,
-                })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.basePrice && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.basePrice?.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.salePrice`}
-              >
-                Sale Price
-              </label>
-              <input
-                type="number"
-                {...register(`variants.${index}.salePrice`, {
-                  valueAsNumber: true,
-                })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.salePrice && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.salePrice?.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.weight`}
-              >
-                Weight (grams)
-              </label>
-              <input
-                type="number"
-                {...register(`variants.${index}.weight`, {
-                  valueAsNumber: true,
-                })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.weight && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.weight?.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.length`}
-              >
-                Length (cm)
-              </label>
-              <input
-                type="number"
-                {...register(`variants.${index}.length`, {
-                  valueAsNumber: true,
-                })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.length && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.length?.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.width`}
-              >
-                Width (cm)
-              </label>
-              <input
-                type="number"
-                {...register(`variants.${index}.width`, {
-                  valueAsNumber: true,
-                })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.width && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.width?.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-700"
-                htmlFor={`variants.${index}.height`}
-              >
-                Height (cm)
-              </label>
-              <input
-                type="number"
-                {...register(`variants.${index}.height`, {
-                  valueAsNumber: true,
-                })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-              />
-              {errors.variants?.[index]?.height && (
-                <p className="text-red-500 text-sm">
-                  {errors.variants?.[index]?.height?.message}
-                </p>
-              )}
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-start align-middle space-x-3">
-              <h5 className="text-md font-semibold text-gray-800">
-                Attributes
-              </h5>
-              <button
-                type="button"
-                onClick={() => {
-                  variantAttributesArray[index].append({
-                    attributeType: "",
-                    attributeValue: "",
-                  });
-                }}
-                className="inline-flex items-center p-1 text-violet-600 hover:text-violet-700 rounded-full hover:bg-violet-50"
-              >
-                <FaPlusCircle className="h-5 w-5" />
-              </button>
-            </div>
-            {variantAttributesArray[index].fields.map((attr, attrIndex) => (
-              <div
-                key={attr.id}
-                className="flex gap-4 mb-2 items-center align-middle"
-              >
-                <div className="flex-1">
-                  <label
-                    className="block text-sm font-medium text-gray-700"
-                    htmlFor={`variants.${index}.attributes.${attrIndex}.attributeType`}
-                  >
-                    Attribute Type
-                  </label>
-                  <input
-                    type="text"
-                    {...register(
-                      `variants.${index}.attributes.${attrIndex}.attributeType`
-                    )}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-                  />
-                  {errors.variants?.[index]?.attributes?.[attrIndex]
-                    ?.attributeType && (
-                    <p className="text-red-500 text-sm">
-                      {
-                        errors.variants?.[index]?.attributes?.[attrIndex]
-                          ?.attributeType?.message
-                      }
-                    </p>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <label
-                    className="block text-sm font-medium text-gray-700"
-                    htmlFor={`variants.${index}.attributes.${attrIndex}.attributeValue`}
-                  >
-                    Attribute Value
-                  </label>
-                  <input
-                    type="text"
-                    {...register(
-                      `variants.${index}.attributes.${attrIndex}.attributeValue`
-                    )}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-violet-300"
-                  />
-                  {errors.variants?.[index]?.attributes?.[attrIndex]
-                    ?.attributeValue && (
-                    <p className="text-red-500 text-sm">
-                      {
-                        errors.variants?.[index]?.attributes?.[attrIndex]
-                          ?.attributeValue?.message
-                      }
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center pt-5">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      variantAttributesArray[index].remove(attrIndex)
-                    }
-                    disabled={variantAttributesArray[index].fields.length <= 1}
-                    className={`p-2 rounded-full ${
-                      variantAttributesArray[index].fields.length <= 1
-                        ? "text-gray-400 hover:bg-transparent cursor-not-allowed"
-                        : "text-red-600 hover:text-red-700 hover:bg-red-50"
-                    }`}
-                  >
-                    <FaRegTrashCan className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
+      {/* Error Alert */}
+      {submitError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+          <FaInfoCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">
+              {submitError}
+            </p>
           </div>
           <button
             type="button"
-            onClick={() => remove(index)}
-            className="mt-2 text-red-600 hover:text-red-800"
+            onClick={() => setSubmitError(null)}
+            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
           >
-            Remove Variant
+            <IoClose className="h-5 w-5" />
           </button>
         </div>
-      ))}
-      <button
-        type="button"
-        onClick={() =>
-          append({
-            sku: "",
-            basePrice: 0,
-            salePrice: 0,
-            isActive: true,
-            weight: 0,
-            length: 0,
-            width: 0,
-            height: 0,
-            attributes: [{ attributeType: "", attributeValue: "" }],
-          })
-        }
-        className="inline-flex items-center px-4 py-2 bg-violet-600 text-white rounded-md shadow hover:bg-violet-700"
-      >
-        Add Variant
-      </button>
+      )}
 
-      <div className="flex justify-between">
+      {/* Basic Information Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+          Basic Information
+        </h3>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Category <span className="text-red-500">*</span>
+          </label>
+          <CategorySelect
+            categories={categories}
+            value={watch("categoryId")}
+            onChange={(value) => setValue("categoryId", value)}
+            isDisabled={categoriesLoading}
+          />
+          {errors.categoryId && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.categoryId.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Product Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            {...register("name")}
+            data-error={!!errors.name}
+            className={`form-input w-full ${
+              errors.name
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                : ""
+            }`}
+            placeholder="Enter product name"
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Brand
+            </label>
+            <input
+              type="text"
+              {...register("brand")}
+              data-error={!!errors.brand}
+              className={`form-input w-full ${
+                errors.brand
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                  : ""
+              }`}
+              placeholder="Enter brand name"
+            />
+            {errors.brand && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {errors.brand.message}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              SKU Prefix <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              {...register("skuPrefix")}
+              data-error={!!errors.skuPrefix}
+              className={`form-input w-full ${
+                errors.skuPrefix
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                  : ""
+              }`}
+              placeholder="e.g., ARD, RPI"
+            />
+            {errors.skuPrefix && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {errors.skuPrefix.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Description
+          </label>
+          <textarea
+            {...register("description")}
+            data-error={!!errors.description}
+            className={`form-textarea w-full ${
+              errors.description
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                : ""
+            }`}
+            rows="4"
+            placeholder="Enter product description"
+          />
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.description.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Specifications
+          </label>
+          <textarea
+            {...register("specifications")}
+            data-error={!!errors.specifications}
+            className={`form-textarea w-full ${
+              errors.specifications
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                : ""
+            }`}
+            rows="4"
+            placeholder="Enter product specifications"
+          />
+          {errors.specifications && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.specifications.message}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            {...register("isActive")}
+            id="isActive"
+            className="form-checkbox h-4 w-4"
+          />
+          <label
+            htmlFor="isActive"
+            className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+          >
+            Product is active
+          </label>
+        </div>
+      </div>
+
+      {/* Variants Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Product Variants
+          </h3>
+          {errors.variants && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {errors.variants.message}
+            </p>
+          )}
+        </div>
+
+        {variantFields.map((variant, index) => (
+          <div
+            key={variant.id}
+            className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 bg-gray-50 dark:bg-gray-900/30 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200">
+                Variant {index + 1}
+              </h4>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    {...register(`variants.${index}.isActive`)}
+                    id={`variant-active-${index}`}
+                    className="form-checkbox h-4 w-4"
+                  />
+                  <label
+                    htmlFor={`variant-active-${index}`}
+                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    Active
+                  </label>
+                </div>
+                {variantFields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                    title="Remove variant"
+                  >
+                    <FaTrash className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  SKU <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...register(`variants.${index}.sku`)}
+                  data-error={!!getFieldError(`variants.${index}.sku`)}
+                  className={`form-input w-full ${
+                    getFieldError(`variants.${index}.sku`)
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }`}
+                  placeholder="e.g., ARD-001"
+                />
+                {getFieldError(`variants.${index}.sku`) && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {getFieldError(`variants.${index}.sku`)}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Base Price (৳) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  {...register(`variants.${index}.basePrice`, {
+                    valueAsNumber: true,
+                  })}
+                  data-error={!!getFieldError(`variants.${index}.basePrice`)}
+                  className={`form-input w-full ${
+                    getFieldError(`variants.${index}.basePrice`)
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }`}
+                  placeholder="0.00"
+                />
+                {getFieldError(`variants.${index}.basePrice`) && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {getFieldError(`variants.${index}.basePrice`)}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Sale Price (৳)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register(`variants.${index}.salePrice`, {
+                    valueAsNumber: true,
+                  })}
+                  data-error={!!getFieldError(`variants.${index}.salePrice`)}
+                  className={`form-input w-full ${
+                    getFieldError(`variants.${index}.salePrice`)
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }`}
+                  placeholder="Optional"
+                />
+                {getFieldError(`variants.${index}.salePrice`) && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {getFieldError(`variants.${index}.salePrice`)}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Weight (g)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register(`variants.${index}.weight`, {
+                    valueAsNumber: true,
+                  })}
+                  className="form-input w-full"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Length (cm)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register(`variants.${index}.length`, {
+                    valueAsNumber: true,
+                  })}
+                  className="form-input w-full"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Width (cm)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register(`variants.${index}.width`, {
+                    valueAsNumber: true,
+                  })}
+                  className="form-input w-full"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Height (cm)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register(`variants.${index}.height`, {
+                    valueAsNumber: true,
+                  })}
+                  className="form-input w-full"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            {/* Attributes */}
+            <VariantAttributes
+              control={control}
+              variantIndex={index}
+              register={register}
+              errors={errors}
+              getFieldError={getFieldError}
+            />
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={() =>
+            append({
+              sku: "",
+              basePrice: 0,
+              salePrice: null,
+              isActive: true,
+              weight: null,
+              length: null,
+              width: null,
+              height: null,
+              attributes: [{ attributeType: "", attributeValue: "" }],
+            })
+          }
+          className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 transition-colors"
+        >
+          <FaPlusCircle className="h-4 w-4" />
+          Add Variant
+        </button>
+      </div>
+
+      {/* Form Actions */}
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md shadow hover:bg-gray-400"
+          className="px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          disabled={isSubmitting || isLoading}
         >
-          Close
+          Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-violet-600 text-white rounded-md shadow hover:bg-violet-700"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-violet-600 rounded-lg shadow-sm hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled={isSubmitting || isLoading}
         >
-          Save
+          {isSubmitting || isLoading
+            ? "Saving..."
+            : product
+            ? "Update Product"
+            : "Create Product"}
         </button>
       </div>
     </form>

@@ -6,13 +6,13 @@ import { z } from "zod";
 // Validation schema
 const passwordSchema = z
   .object({
-    oldPassword: z.string().min(1, "Current password is required"),
+    oldPassword: z.string().min(8, "Current password is required (minimum 8 characters)"),
     newPassword: z
       .string()
       .min(8, "Password must be at least 8 characters")
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9])/,
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
       ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
@@ -27,9 +27,6 @@ function PasswordChangeForm({ profile, onSubmit, isLoading }) {
     newPassword: false,
     confirmPassword: false,
   });
-
-  // Determine username: prefer email, fallback to phone
-  const username = profile?.email || profile?.phone || "";
 
   const {
     register,
@@ -46,15 +43,10 @@ function PasswordChangeForm({ profile, onSubmit, isLoading }) {
   });
 
   const handleFormSubmit = (data) => {
-    if (!username) {
-      // This shouldn't happen, but just in case
-      return;
-    }
-    
     onSubmit({
-      username: username,
       oldPassword: data.oldPassword,
       newPassword: data.newPassword,
+      password_confirmation: data.confirmPassword,
     });
     reset();
   };
@@ -77,34 +69,6 @@ function PasswordChangeForm({ profile, onSubmit, isLoading }) {
         </p>
 
         <div className="space-y-4 max-w-md">
-          {/* Username (Email or Phone) */}
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Username <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <input
-                id="username"
-                type="text"
-                value={username}
-                disabled
-                className="form-input w-full bg-gray-50 dark:bg-gray-700/50 cursor-not-allowed text-gray-600 dark:text-gray-400 pr-10"
-                placeholder="Email or phone number"
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {profile?.email ? "Using your email address" : profile?.phone ? "Using your phone number" : "Username will be used for password change"}
-            </p>
-          </div>
-
           {/* Current Password */}
           <div>
             <label
@@ -238,7 +202,7 @@ function PasswordChangeForm({ profile, onSubmit, isLoading }) {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Password must be at least 8 characters with uppercase, lowercase, and number
+              Password must be at least 8 characters with uppercase, lowercase, number, and special character
             </p>
           </div>
 
