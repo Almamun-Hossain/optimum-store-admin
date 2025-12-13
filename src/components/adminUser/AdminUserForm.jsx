@@ -83,6 +83,27 @@ const AdminUserForm = ({ adminUser, onSubmit, onClose, isLoading }) => {
         )}
       </div>
 
+      {adminUser?.roles && adminUser.roles.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Current Roles
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {adminUser.roles.map((role) => (
+              <span
+                key={role.id}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400"
+              >
+                {role.name}
+              </span>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Note: Role assignment is managed separately. Use the "Assign Role" button in the table.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center pt-2">
         <label className="flex items-center">
           <input

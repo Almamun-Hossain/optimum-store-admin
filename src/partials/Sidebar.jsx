@@ -67,7 +67,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
     pathname === "/users" || 
     pathname === "/inventory" || 
     pathname === "/shipping-methods" || 
-    pathname === "/notification-logs";
+    pathname === "/notification-logs" ||
+    pathname === "/roles" ||
+    pathname === "/permissions" ||
+    pathname === "/payments" ||
+    pathname === "/preorders";
 
   return (
     <div className="min-w-fit">
@@ -462,6 +466,78 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                               >
                                 <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                                   Notification Logs
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="roles" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/roles"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Roles
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="permissions" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/permissions"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Permissions
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="payments" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/payments"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Payments
+                                </span>
+                              </NavLink>
+                            </li>
+                          </PermissionGuard>
+                          <PermissionGuard module="preorders" fallback={null}>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/preorders"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " +
+                                  (isActive
+                                    ? "text-violet-500"
+                                    : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Preorders
                                 </span>
                               </NavLink>
                             </li>

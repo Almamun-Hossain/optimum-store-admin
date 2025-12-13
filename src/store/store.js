@@ -8,6 +8,9 @@ import { inventoryApi } from "./apis/inventoryApi";
 import { shippingMethodsApi } from "./apis/shippingMethodsApi";
 import { notificationLogsApi } from "./apis/notificationLogsApi";
 import { adminUsersApi } from "./apis/adminUsersApi";
+import { rolesApi } from "./apis/rolesApi";
+import { paymentsApi } from "./apis/paymentsApi";
+import { preordersApi } from "./apis/preordersApi";
 import authReducer from "./slices/authSlice";
 import categoryReducer from "./slices/categorySlice";
 
@@ -24,6 +27,9 @@ export const store = configureStore({
     [shippingMethodsApi.reducerPath]: shippingMethodsApi.reducer,
     [notificationLogsApi.reducerPath]: notificationLogsApi.reducer,
     [adminUsersApi.reducerPath]: adminUsersApi.reducer,
+    [rolesApi.reducerPath]: rolesApi.reducer,
+    [paymentsApi.reducerPath]: paymentsApi.reducer,
+    [preordersApi.reducerPath]: preordersApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -35,6 +41,9 @@ export const store = configureStore({
       inventoryApi.middleware,
       shippingMethodsApi.middleware,
       notificationLogsApi.middleware,
-      adminUsersApi.middleware
+      adminUsersApi.middleware,
+      rolesApi.middleware,
+      paymentsApi.middleware,
+      preordersApi.middleware
     ),
 });

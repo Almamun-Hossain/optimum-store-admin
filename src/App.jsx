@@ -7,6 +7,7 @@ import "./css/style.css";
 import "./charts/ChartjsConfig";
 import LoadingSpinner from "./components/LoadingSpinner";
 import PageTransition from "./components/PageTransition";
+import AuthStateSync from "./components/AuthStateSync";
 
 // Import pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -21,6 +22,10 @@ const ShippingMethodsPage = React.lazy(() => import("./pages/ShippingMethodsPage
 const NotificationLogsPage = React.lazy(() => import("./pages/NotificationLogsPage"));
 const AdminUsersPage = React.lazy(() => import("./pages/AdminUsersPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
+const RolesPage = React.lazy(() => import("./pages/RolesPage"));
+const PermissionsPage = React.lazy(() => import("./pages/PermissionsPage"));
+const PaymentsPage = React.lazy(() => import("./pages/PaymentsPage"));
+const PreordersPage = React.lazy(() => import("./pages/PreordersPage"));
 
 function App() {
   const location = useLocation();
@@ -33,9 +38,10 @@ function App() {
 
   return (
     <Provider store={store}>
-      <Suspense fallback={<LoadingSpinner />}>
-        <PageTransition>
-          <Routes location={location} key={location.pathname}>
+      <AuthStateSync>
+        <Suspense fallback={<LoadingSpinner />}>
+          <PageTransition>
+            <Routes location={location} key={location.pathname}>
             <Route path="/signin" element={<SignIn />} />
             <Route
               path="/"
@@ -117,9 +123,42 @@ function App() {
                 </ProtectedRoute>
               }
             />
-          </Routes>
-        </PageTransition>
-      </Suspense>
+            <Route
+              path="/roles"
+              element={
+                <ProtectedRoute>
+                  <RolesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/permissions"
+              element={
+                <ProtectedRoute>
+                  <PermissionsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payments"
+              element={
+                <ProtectedRoute>
+                  <PaymentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/preorders"
+              element={
+                <ProtectedRoute>
+                  <PreordersPage />
+                </ProtectedRoute>
+              }
+            />
+            </Routes>
+          </PageTransition>
+        </Suspense>
+      </AuthStateSync>
     </Provider>
   );
 }
