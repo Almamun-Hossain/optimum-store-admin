@@ -3,9 +3,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { useGetProfileQuery } from "../store/apis/authApi";
 import { setCredentials, logout } from "../store/slices/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
+import { isTokenExpired } from "../utils/tokenUtils";
 
 /**
  * Component to sync auth state with profile API when token exists but user data is missing
+ * Note: Only access token expiration is checked here. Refresh token expiration
+ * is determined by backend API responses (401/404) handled in baseQueryWithAuth
  */
 function AuthStateSync({ children }) {
   const dispatch = useDispatch();
@@ -16,7 +19,24 @@ function AuthStateSync({ children }) {
   // Only fetch profile if we have tokens but no user data
   // Skip on signin page
   const isSignInPage = location.pathname === "/signin";
-  const shouldFetchProfile = (token || refreshToken) && !user && !isSignInPage;
+  
+  // Check if access token is expired
+  // If access token is expired and no refresh token, clear and redirect
+  // If access token is expired but refresh token exists, let API call handle refresh
+  const hasTokens = token || refreshToken;
+  const isAccessTokenExpired = token && isTokenExpired(token);
+  
+  // If access token is expired and no refresh token, clear and redirect
+  useEffect(() => {
+    if (isAccessTokenExpired && !refreshToken && !isSignInPage) {
+      dispatch(logout());
+      navigate("/signin", { replace: true });
+    }
+  }, [isAccessTokenExpired, refreshToken, isSignInPage, dispatch, navigate]);
+
+  // Only fetch profile if we have tokens and no user data
+  // If access token is expired but refresh token exists, API will handle refresh
+  const shouldFetchProfile = hasTokens && !user && !isSignInPage;
 
   const {
     data: profileResponse,

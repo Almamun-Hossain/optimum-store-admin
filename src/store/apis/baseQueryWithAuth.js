@@ -1,166 +1,153 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, logout } from "../slices/authSlice";
 
-const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
-    const state = api.getState();
-    const token = state.auth.token;
-    const refreshToken = state.auth.refreshToken;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    const result = await fetchBaseQuery({
-        baseUrl: import.meta.env.VITE_API_BASE_URL,
-        prepareHeaders: (headers) => {
-            if (token) {
-                headers.set("authorization", `Bearer ${token}`);
-            }
-            return headers;
-        },
-    })(args, api, extraOptions);
-
-    // Check if the token has expired
-    // Handle both status codes (401 Unauthorized, 405 Token expired) and error messages
-    const errorData = result.error?.data || result.data;
-    const errorMessage = typeof errorData === 'object' 
-        ? (errorData.error || errorData.message || '')
-        : (errorData || '');
-    const errorMessageStr = typeof errorMessage === 'string' 
-        ? errorMessage.toLowerCase() 
-        : '';
-    
-    // Check if response indicates token expiration
-    // Handle cases where error is in result.error.data or result.data
-    const hasTokenExpiredMessage = errorMessageStr.includes('token expired');
-    const hasTokenExpiredInErrorData = result.error?.data && 
-        typeof result.error.data === 'object' && 
-        result.error.data.success === false && 
-        hasTokenExpiredMessage;
-    const hasTokenExpiredInData = result.data && 
-        typeof result.data === 'object' && 
-        result.data.success === false && 
-        hasTokenExpiredMessage;
-    
-    const isTokenExpired = 
-        (result.error && (
-            result.error.status === 401 || 
-            result.error.status === 405
-        )) ||
-        hasTokenExpiredInErrorData ||
-        hasTokenExpiredInData ||
-        (result.error && hasTokenExpiredMessage);
-
-    if (isTokenExpired && refreshToken) {
-        try {
-            // Call refresh token API
-            const refreshResult = await fetchBaseQuery({
-                baseUrl: import.meta.env.VITE_API_BASE_URL,
-                prepareHeaders: (headers) => {
-                    // Use expired token as per API docs
-                    if (token) {
-                        headers.set("Authorization", `Bearer ${token}`);
-                    }
-                    headers.set("x-refresh-token", refreshToken);
-                    return headers;
-                },
-            })(
-                {
-                    url: "/api/v1/refresh-token",
-                    method: "POST",
-                },
-                api,
-                extraOptions
-            );
-
-            // Check if refresh token call itself failed
-            const refreshErrorStatus = refreshResult.error?.status;
-            const refreshErrorData = refreshResult.error?.data || refreshResult.data;
-            const refreshErrorMessage = typeof refreshErrorData === 'object' 
-                ? (refreshErrorData.error || refreshErrorData.message || '')
-                : (refreshErrorData || '');
-            const refreshErrorMessageStr = typeof refreshErrorMessage === 'string' 
-                ? refreshErrorMessage.toLowerCase() 
-                : '';
-            
-            // Check for refresh token errors (404, 401, 400, or success: false)
-            const isRefreshTokenError = 
-                refreshErrorStatus === 404 || 
-                refreshErrorStatus === 401 || 
-                refreshErrorStatus === 400 ||
-                (refreshResult.data && refreshResult.data.success === false) ||
-                (refreshResult.error && refreshErrorMessageStr.includes('token'));
-
-            if (isRefreshTokenError) {
-                // Refresh token endpoint returned error, logout and clear storage
-                api.dispatch(logout());
-                // Clear any additional storage items if needed
-                if (typeof window !== 'undefined') {
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    window.location.href = '/signin';
-                }
-                return refreshResult;
-            }
-
-            if (refreshResult.data && refreshResult.data.success) {
-                // Update credentials with new tokens
-                api.dispatch(
-                    setCredentials({
-                        user: refreshResult.data.data.user || state.auth.user,
-                        accessToken: refreshResult.data.data.accessToken,
-                        refreshToken: refreshResult.data.data.refreshToken,
-                    })
-                );
-
-                // Retry the original request with new token
-                const retryResult = await fetchBaseQuery({
-                    baseUrl: import.meta.env.VITE_API_BASE_URL,
-                    prepareHeaders: (headers) => {
-                        headers.set(
-                            "authorization",
-                            `Bearer ${refreshResult.data.data.accessToken}`
-                        );
-                        return headers;
-                    },
-                })(args, api, extraOptions);
-
-                return retryResult;
-            } else {
-                // Refresh token failed (other errors), logout and clear storage
-                api.dispatch(logout());
-                if (typeof window !== 'undefined') {
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    window.location.href = '/signin';
-                }
-                return refreshResult.error ? refreshResult : result;
-            }
-        } catch (error) {
-            // If refresh fails, logout and clear storage
-            api.dispatch(logout());
-            if (typeof window !== 'undefined') {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.href = '/signin';
-            }
-            return result;
-        }
-    } else if (isTokenExpired && !refreshToken) {
-        // Token expired but no refresh token available, logout and clear storage
-        api.dispatch(logout());
-        if (typeof window !== 'undefined') {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/signin';
-        }
-    } else if (result.error && result.error.status === 406) {
-        // 406 indicates refresh token expired or invalid, logout and clear storage
-        api.dispatch(logout());
-        if (typeof window !== 'undefined') {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/signin';
-        }
+// Helper to perform logout and redirect
+const handleLogoutAndRedirect = (api) => {
+  // Try to dispatch logout action if api.dispatch is available
+  // If not, we'll still clear localStorage directly
+  try {
+    if (api && api.dispatch && typeof api.dispatch === 'function') {
+      api.dispatch(logout());
     }
+  } catch (error) {
+    console.warn('Failed to dispatch logout action:', error);
+  }
 
-    return result;
+  // Always clear localStorage and sessionStorage, regardless of dispatch
+  if (typeof window !== "undefined") {
+    // Explicitly remove auth tokens first
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    // Clear all localStorage and sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Use setTimeout to ensure storage operations complete before redirect
+    setTimeout(() => {
+      window.location.href = "/signin";
+    }, 0);
+  }
 };
 
-export default baseQueryWithAuthCheck; 
+// Helper to extract error message in a consistent way
+const getErrorMessage = (data) => {
+  if (!data) return "";
+  if (typeof data === "string") return data;
+  if (typeof data === "object") {
+    return data.error || data.message || data.detail || "";
+  }
+  return "";
+};
+
+const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
+  const { auth } = api.getState();
+  const token = auth.token;
+  const refreshToken = auth.refreshToken;
+
+  // Base query with auth header
+  const baseQuery = fetchBaseQuery({
+    baseUrl: BASE_URL,
+    prepareHeaders: (headers) => {
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`); // Standard header name
+      }
+      return headers;
+    },
+  });
+
+  // Initial request
+  let result = await baseQuery(args, api, extraOptions);
+
+  // Normalize error/data for checking
+  const responseData = result.error?.data || result.data;
+  const errorMessage = getErrorMessage(responseData).toLowerCase();
+  const status = result.error?.status;
+
+  const isTokenExpired =
+    (status === 401 || status === 405) ||
+    errorMessage.includes("token expired") ||
+    (responseData && responseData.success === false && errorMessage.includes("token"));
+
+  // Special case: 406 usually means refresh token invalid/expired
+  if (result.error?.status === 406) {
+    handleLogoutAndRedirect(api);
+    return result;
+  }
+
+  if (isTokenExpired && refreshToken) {
+    try {
+      // Attempt to refresh token
+      const refreshQuery = fetchBaseQuery({
+        baseUrl: BASE_URL,
+        prepareHeaders: (headers) => {
+          if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
+          }
+          headers.set("x-refresh-token", refreshToken);
+          return headers;
+        },
+      });
+
+      const refreshResult = await refreshQuery(
+        { url: "/api/v1/refresh-token", method: "POST" },
+        api,
+        extraOptions
+      );
+
+      const refreshData = refreshResult.data || refreshResult.error?.data;
+      const refreshErrorMessage = getErrorMessage(refreshData).toLowerCase();
+      const refreshStatus = refreshResult.error?.status;
+
+      // Determine if refresh failed
+      const isRefreshFailed =
+        refreshStatus === 400 ||
+        refreshStatus === 401 ||
+        refreshStatus === 404 ||
+        (refreshData && refreshData.success === false) ||
+        refreshErrorMessage.includes("token");
+
+      if (isRefreshFailed) {
+        handleLogoutAndRedirect(api);
+        return refreshResult.error ? refreshResult : result;
+      }
+
+      // Refresh successful
+      if (refreshResult.data?.success && refreshResult.data?.data) {
+        const { accessToken, refreshToken: newRefreshToken, user } = refreshResult.data.data;
+
+        api.dispatch(
+          setCredentials({
+            user: user || auth.user,
+            accessToken,
+            refreshToken: newRefreshToken ?? refreshToken, // fallback if not provided
+          })
+        );
+
+        // Retry original query with new access token
+        const retryQuery = fetchBaseQuery({
+          baseUrl: BASE_URL,
+          prepareHeaders: (headers) => {
+            headers.set("Authorization", `Bearer ${accessToken}`);
+            return headers;
+          },
+        });
+
+        result = await retryQuery(args, api, extraOptions);
+        return result;
+      }
+    } catch (err) {
+      // Network or unexpected error during refresh
+      handleLogoutAndRedirect(api);
+      return result;
+    }
+  } else if (isTokenExpired && !refreshToken) {
+    // No refresh token available
+    handleLogoutAndRedirect(api);
+  }
+
+  return result;
+};
+
+export default baseQueryWithAuthCheck;
