@@ -31,10 +31,22 @@ const productSchema = z.object({
             .optional()
             .nullable(),
           isActive: z.boolean().default(true),
-          weight: z.number().min(0, "Weight cannot be negative").optional(),
-          length: z.number().min(0, "Length cannot be negative").optional(),
-          width: z.number().min(0, "Width cannot be negative").optional(),
-          height: z.number().min(0, "Height cannot be negative").optional(),
+          weight: z.preprocess(
+            (val) => (val === null || val === "" || (typeof val === "number" && isNaN(val)) ? undefined : val),
+            z.number().min(0, "Weight cannot be negative").optional()
+          ),
+          length: z.preprocess(
+            (val) => (val === null || val === "" || (typeof val === "number" && isNaN(val)) ? undefined : val),
+            z.number().min(0, "Length cannot be negative").optional()
+          ),
+          width: z.preprocess(
+            (val) => (val === null || val === "" || (typeof val === "number" && isNaN(val)) ? undefined : val),
+            z.number().min(0, "Width cannot be negative").optional()
+          ),
+          height: z.preprocess(
+            (val) => (val === null || val === "" || (typeof val === "number" && isNaN(val)) ? undefined : val),
+            z.number().min(0, "Height cannot be negative").optional()
+          ),
           attributes: z
             .array(
               z.object({
@@ -174,6 +186,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
   };
 
   const onFormError = (errors) => {
+    console.log("errors", errors);
     const firstError = Object.values(errors)[0];
     if (firstError?.message) {
       toast.error(firstError.message);
