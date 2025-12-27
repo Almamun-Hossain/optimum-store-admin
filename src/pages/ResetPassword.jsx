@@ -32,6 +32,37 @@ const resetPasswordSchema = z
     path: ["password_confirmation"],
   });
 
+// OTP validation time: 5 minutes (300 seconds)
+const OTP_VALIDATION_TIME = 5 * 60; // 5 minutes in seconds
+
+// Helper function to get sessionStorage key for OTP timestamp
+const getOtpTimestampKey = (identifier, method) => {
+  return `otp_sent_timestamp_${method}_${identifier}`;
+};
+
+// Helper function to get remaining cooldown time
+const getRemainingCooldown = (identifier, method) => {
+  const key = getOtpTimestampKey(identifier, method);
+  const timestampStr = sessionStorage.getItem(key);
+  
+  if (!timestampStr) {
+    return 0;
+  }
+
+  const timestamp = parseInt(timestampStr, 10);
+  const now = Date.now();
+  const elapsed = Math.floor((now - timestamp) / 1000); // elapsed time in seconds
+  const remaining = Math.max(0, OTP_VALIDATION_TIME - elapsed);
+  
+  return remaining;
+};
+
+// Helper function to store OTP send timestamp
+const storeOtpTimestamp = (identifier, method) => {
+  const key = getOtpTimestampKey(identifier, method);
+  sessionStorage.setItem(key, Date.now().toString());
+};
+
 function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -49,19 +80,45 @@ function ResetPassword() {
   const identifier = location.state?.identifier || "";
   const method = location.state?.method || "email";
 
+  // Restore timer from sessionStorage on mount
   useEffect(() => {
     if (!identifier) {
       toast.error("Please request a password reset first");
       navigate("/reset-password/request", { replace: true });
+      return;
     }
-  }, [identifier, navigate]);
 
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
+    // Restore cooldown from sessionStorage
+    const remaining = getRemainingCooldown(identifier, method);
+    if (remaining > 0) {
+      setResendCooldown(remaining);
     }
-  }, [resendCooldown]);
+  }, [identifier, method, navigate]);
+
+  // Timer countdown effect - updates every second based on sessionStorage
+  useEffect(() => {
+    if (!identifier) return;
+
+    const timer = setInterval(() => {
+      const remaining = getRemainingCooldown(identifier, method);
+      if (remaining > 0) {
+        setResendCooldown(remaining);
+      } else {
+        setResendCooldown(0);
+        // Clean up sessionStorage when timer expires
+        const key = getOtpTimestampKey(identifier, method);
+        sessionStorage.removeItem(key);
+      }
+    }, 1000);
+
+    // Initial check
+    const remaining = getRemainingCooldown(identifier, method);
+    if (remaining > 0) {
+      setResendCooldown(remaining);
+    }
+
+    return () => clearInterval(timer);
+  }, [identifier, method]);
 
   const {
     register,
@@ -88,6 +145,11 @@ function ResetPassword() {
       }).unwrap();
 
       toast.success(result.message || "Password reset successfully");
+      
+      // Clean up sessionStorage on successful password reset
+      const key = getOtpTimestampKey(identifier, method);
+      sessionStorage.removeItem(key);
+      
       navigate("/signin", { replace: true });
     } catch (err) {
       const errorMessage =
@@ -99,7 +161,12 @@ function ResetPassword() {
   };
 
   const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
+    // Check remaining cooldown from sessionStorage
+    const remaining = getRemainingCooldown(identifier, method);
+    if (remaining > 0) {
+      setResendCooldown(remaining);
+      return;
+    }
 
     setIsResending(true);
     try {
@@ -109,7 +176,10 @@ function ResetPassword() {
       }).unwrap();
 
       toast.success(result.message || "Reset code resent successfully");
-      setResendCooldown(60); // 60 second cooldown
+      
+      // Store OTP send timestamp in sessionStorage
+      storeOtpTimestamp(identifier, method);
+      setResendCooldown(OTP_VALIDATION_TIME); // 5 minutes cooldown
     } catch (err) {
       const errorMessage =
         err?.data?.error || err?.data?.message || err?.message || "Failed to resend code";
