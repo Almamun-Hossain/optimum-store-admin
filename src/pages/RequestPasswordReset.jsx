@@ -12,6 +12,17 @@ const requestResetSchema = z.object({
   identifier: z.string().min(1, "Email or phone number is required"),
 });
 
+// Helper function to get sessionStorage key for OTP timestamp
+const getOtpTimestampKey = (identifier, method) => {
+  return `otp_sent_timestamp_${method}_${identifier}`;
+};
+
+// Helper function to store OTP send timestamp
+const storeOtpTimestamp = (identifier, method) => {
+  const key = getOtpTimestampKey(identifier, method);
+  sessionStorage.setItem(key, Date.now().toString());
+};
+
 function RequestPasswordReset() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -42,6 +53,10 @@ function RequestPasswordReset() {
       
       setIdentifier(data.identifier);
       setSuccess(true);
+      
+      // Store OTP send timestamp in sessionStorage
+      storeOtpTimestamp(data.identifier, method);
+      
       toast.success(result.message || "Reset code sent successfully");
     } catch (err) {
       const errorMessage =
