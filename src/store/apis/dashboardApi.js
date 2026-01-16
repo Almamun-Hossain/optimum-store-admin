@@ -237,6 +237,27 @@ export const dashboardApi = createApi({
       },
       providesTags: ["Alerts"],
     }),
+
+    /**
+     * Get All Dashboard Data
+     * Single endpoint that returns all dashboard data to avoid D1 overload from concurrent requests
+     * @param {Object} params - Query parameters
+     * @param {string} params.from - Start date (ISO format, e.g., "2025-12-01")
+     * @param {string} params.to - End date (ISO format, e.g., "2025-12-12")
+     */
+    getAllDashboardData: builder.query({
+      query: (params = {}) => ({
+        url: "/api/v1/admin/dashboard/all",
+        params,
+      }),
+      transformResponse: (response) => {
+        if (response.success) {
+          return response.data;
+        }
+        throw new Error(response.error || "Failed to fetch dashboard data");
+      },
+      providesTags: ["Dashboard", "KPIs", "Sales", "Products", "Customers", "Alerts"],
+    }),
   }),
 });
 
@@ -253,4 +274,5 @@ export const {
   useGetCustomerOverviewQuery,
   useGetTopCustomersQuery,
   useGetDashboardAlertsQuery,
+  useGetAllDashboardDataQuery,
 } = dashboardApi;

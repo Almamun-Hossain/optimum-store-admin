@@ -2,15 +2,22 @@ import React from 'react';
 import Flatpickr from 'react-flatpickr';
 
 function Datepicker({
-  align
+  align,
+  onDateChange,
+  value
 }) {
+
+  // Convert date strings to Date objects for Flatpickr
+  const flatpickrValue = value 
+    ? [new Date(value.from), new Date(value.to)]
+    : [new Date().setDate(new Date().getDate() - 6), new Date()];
 
   const options = {
     mode: 'range',
     static: true,
     monthSelectorType: 'static',
     dateFormat: 'M j, Y',
-    defaultDate: [new Date().setDate(new Date().getDate() - 6), new Date()],
+    defaultDate: flatpickrValue,
     prevArrow: '<svg class="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M5.4 10.8l1.4-1.4-4-4 4-4L5.4 0 0 5.4z" /></svg>',
     nextArrow: '<svg class="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M1.4 10.8L0 9.4l4-4-4-4L1.4 0l5.4 5.4z" /></svg>',
     onReady: (selectedDates, dateStr, instance) => {
@@ -20,12 +27,23 @@ function Datepicker({
     },
     onChange: (selectedDates, dateStr, instance) => {
       instance.element.value = dateStr.replace('to', '-');
+      
+      // Call the callback when dates are selected (both start and end)
+      if (selectedDates.length === 2 && onDateChange) {
+        const from = selectedDates[0].toISOString().split('T')[0];
+        const to = selectedDates[1].toISOString().split('T')[0];
+        onDateChange({ from, to });
+      }
     },
   }
 
   return (
     <div className="relative">
-      <Flatpickr className="form-input pl-9 dark:bg-gray-800 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100 font-medium w-[15.5rem]" options={options} />
+      <Flatpickr 
+        className="form-input pl-9 dark:bg-gray-800 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100 font-medium w-[15.5rem]" 
+        options={options}
+        value={flatpickrValue}
+      />
       <div className="absolute inset-0 right-auto flex items-center pointer-events-none">
         <svg className="fill-current text-gray-400 dark:text-gray-500 ml-3" width="16" height="16" viewBox="0 0 16 16">
           <path d="M5 4a1 1 0 0 0 0 2h6a1 1 0 1 0 0-2H5Z" />
