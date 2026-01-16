@@ -18,15 +18,41 @@ const OrderStatusModal = ({
     { skip: !order?.id || !showHistory }
   );
 
-  useEffect(() => {
-    if (order) {
-      // Get current status ID - this would need to be mapped from status name
-      // For now, we'll use a simple approach
-      setValue("notes", "");
-    }
-  }, [order, setValue]);
+  // Status name to ID mapping
+  const statusNameToId = {
+    pending: 1,
+    paid: 2,
+    processing: 3,
+    shipped: 4,
+    delivered: 5,
+    cancelled: 6,
+    refunded: 7,
+  };
 
-  const statusOptions = [
+  // Status ID to name mapping (for reverse lookup)
+  const statusIdToName = {
+    1: "pending",
+    2: "paid",
+    3: "processing",
+    4: "shipped",
+    5: "delivered",
+    6: "cancelled",
+    7: "refunded",
+  };
+
+  // Valid status transitions
+  const validTransitions = {
+    pending: ["paid", "cancelled"],
+    paid: ["processing", "cancelled"],
+    processing: ["shipped", "cancelled"],
+    shipped: ["delivered"],
+    delivered: ["refunded"],
+    cancelled: [],
+    refunded: [],
+  };
+
+  // All status options
+  const allStatusOptions = [
     { value: 1, label: "Pending" },
     { value: 2, label: "Paid" },
     { value: 3, label: "Processing" },
@@ -35,6 +61,35 @@ const OrderStatusModal = ({
     { value: 6, label: "Cancelled" },
     { value: 7, label: "Refunded" },
   ];
+
+  // Get valid status options based on current status
+  const getValidStatusOptions = () => {
+    if (!order?.status) return allStatusOptions;
+
+    const currentStatus = order.status.toLowerCase();
+    const validNextStatuses = validTransitions[currentStatus] || [];
+
+    // If no valid transitions, return empty array (order cannot be changed)
+    if (validNextStatuses.length === 0) {
+      return [];
+    }
+
+    // Map valid status names to status options
+    return allStatusOptions.filter((option) => {
+      const statusName = statusIdToName[option.value];
+      return validNextStatuses.includes(statusName);
+    });
+  };
+
+  const statusOptions = getValidStatusOptions();
+
+  useEffect(() => {
+    if (order) {
+      // Reset form when order changes
+      setValue("statusId", "");
+      setValue("notes", "");
+    }
+  }, [order, setValue]);
 
   const handleFormSubmit = (data) => {
     onSubmit({
@@ -53,7 +108,7 @@ const OrderStatusModal = ({
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
             Current Status
           </label>
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -63,40 +118,51 @@ const OrderStatusModal = ({
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               New Status <span className="text-red-500">*</span>
             </label>
-            <select
-              {...register("statusId", { required: "Status is required" })}
-              className={`form-select w-full ${errors.statusId ? "border-red-500" : ""}`}
-            >
-              <option value="">Select status</option>
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {errors.statusId && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                {errors.statusId.message}
-              </p>
+            {statusOptions.length === 0 ? (
+              <div className="p-3 bg-yellow-50 rounded-md border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  No valid status transitions available for orders with status "{order?.status}". 
+                  This order cannot be moved to another status.
+                </p>
+              </div>
+            ) : (
+              <>
+                <select
+                  {...register("statusId", { required: "Status is required" })}
+                  className={`w-full form-select ${errors.statusId ? "border-red-500" : ""}`}
+                >
+                  <option value="">Select status</option>
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.statusId && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.statusId.message}
+                  </p>
+                )}
+              </>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               Notes (Optional)
             </label>
             <textarea
               {...register("notes")}
               rows={3}
-              className="form-textarea w-full"
+              className="w-full form-textarea"
               placeholder="Add notes about this status change..."
             />
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={() => setShowHistory(!showHistory)}
@@ -108,15 +174,15 @@ const OrderStatusModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="btn bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                className="text-gray-700 bg-gray-100 btn dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 disabled={isLoading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn bg-violet-500 hover:bg-violet-600 text-white"
-                disabled={isLoading}
+                className="text-white bg-violet-500 btn hover:bg-violet-600"
+                disabled={isLoading || statusOptions.length === 0}
               >
                 {isLoading ? "Updating..." : "Update Status"}
               </button>
@@ -125,8 +191,8 @@ const OrderStatusModal = ({
         </form>
 
         {showHistory && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
               Order History
             </h3>
             {historyLoading ? (
@@ -138,10 +204,10 @@ const OrderStatusModal = ({
                 {historyData.map((entry, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                    className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg dark:bg-gray-700/50"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex justify-between items-center mb-1">
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {entry.status}
                         </span>
@@ -154,7 +220,7 @@ const OrderStatusModal = ({
                           {entry.notes}
                         </p>
                       )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Changed by: {entry.changedBy}
                       </p>
                     </div>

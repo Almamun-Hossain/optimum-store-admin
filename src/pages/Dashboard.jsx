@@ -1,18 +1,5 @@
 import React, { useState, useMemo } from "react";
-import {
-  useGetKPIStatsQuery,
-  useGetSalesTrendsQuery,
-  useGetSalesByCategoryQuery,
-  useGetSalesByProductQuery,
-  useGetSalesByPaymentMethodQuery,
-  useGetOrderStatusCountsQuery,
-  useGetProductSummaryQuery,
-  useGetBestSellingProductsQuery,
-  useGetLowStockProductsQuery,
-  useGetCustomerOverviewQuery,
-  useGetTopCustomersQuery,
-  useGetDashboardAlertsQuery,
-} from "../store/apis/dashboardApi";
+import { useGetAllDashboardDataQuery } from "../store/apis/dashboardApi";
 import Sidebar from "../partials/Sidebar";
 import Header from "../partials/Header";
 import Datepicker from "../components/Datepicker";
@@ -38,31 +25,25 @@ function Dashboard() {
     to: new Date().toISOString().split("T")[0],
   });
 
-  // Fetch all dashboard data
-  const { data: kpiStats, isLoading: kpiLoading } = useGetKPIStatsQuery({
+  // Fetch all dashboard data in a single request
+  const { data: dashboardData, isLoading: dashboardLoading } = useGetAllDashboardDataQuery({
     from: dateRange.from,
     to: dateRange.to,
   });
 
-  const { data: salesTrends, isLoading: trendsLoading } = useGetSalesTrendsQuery({
-    from: dateRange.from,
-    to: dateRange.to,
-    groupBy: "day",
-  });
-
-  const { data: salesByCategory } = useGetSalesByCategoryQuery({ limit: 5 });
-  const { data: salesByProduct } = useGetSalesByProductQuery({ limit: 5 });
-  const { data: salesByPaymentMethod } = useGetSalesByPaymentMethodQuery();
-  const { data: orderStatusCounts } = useGetOrderStatusCountsQuery();
-  const { data: productSummary } = useGetProductSummaryQuery();
-  const { data: bestSellers } = useGetBestSellingProductsQuery({ limit: 5 });
-  const { data: lowStockProducts } = useGetLowStockProductsQuery({ limit: 10 });
-  const { data: customerOverview } = useGetCustomerOverviewQuery({
-    from: dateRange.from,
-    to: dateRange.to,
-  });
-  const { data: topCustomers } = useGetTopCustomersQuery({ limit: 5 });
-  const { data: alerts } = useGetDashboardAlertsQuery();
+  // Extract data from the single response
+  const kpiStats = dashboardData?.kpis;
+  const salesTrends = dashboardData?.salesTrends;
+  const salesByCategory = dashboardData?.salesByCategory;
+  const salesByProduct = dashboardData?.salesByProduct;
+  const salesByPaymentMethod = dashboardData?.salesByPaymentMethod;
+  const orderStatusCounts = dashboardData?.orderStatusCounts;
+  const productSummary = dashboardData?.productsSummary;
+  const bestSellers = dashboardData?.bestSellers;
+  const lowStockProducts = dashboardData?.lowStockProducts;
+  const customerOverview = dashboardData?.customersOverview;
+  const topCustomers = dashboardData?.topCustomers;
+  const alerts = dashboardData?.alerts;
 
   // Prepare chart data
   const salesTrendsData = useMemo(() => {
@@ -132,27 +113,31 @@ function Dashboard() {
 
   return (
     <ToasterWrapper>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex overflow-hidden h-screen">
         {/* Sidebar */}
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
         {/* Content area */}
-        <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex overflow-y-auto overflow-x-hidden relative flex-col flex-1">
           {/*  Site header */}
           <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
           <main className="grow">
-            <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+            <div className="px-4 py-8 mx-auto w-full sm:px-6 lg:px-8 max-w-9xl">
               {/* Dashboard actions */}
-              <div className="sm:flex sm:justify-between sm:items-center mb-8">
-                  <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
+              <div className="mb-8 sm:flex sm:justify-between sm:items-center">
+                  <h1 className="text-2xl font-bold text-gray-800 md:text-3xl dark:text-gray-100">
                     Dashboard
                   </h1>
-                <Datepicker align="right" />
+                <Datepicker 
+                  align="right" 
+                  value={dateRange}
+                  onDateChange={setDateRange}
+                />
               </div>
 
               <PermissionGuard permission="dashboard.view" fallback={
-                <div className="text-center py-12">
+                <div className="py-12 text-center">
                   <p className="text-red-600 dark:text-red-400">
                     You don't have permission to view the dashboard.
                   </p>
@@ -162,28 +147,28 @@ function Dashboard() {
                 <DashboardAlert alerts={alerts?.alerts} />
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2 lg:grid-cols-4">
                   <KPICard
                     title="Total Revenue"
                     value={kpiStats?.revenue}
-                    isLoading={kpiLoading}
+                    isLoading={dashboardLoading}
                     prefix="৳"
                     formatter={(val) => val?.toLocaleString()}
                   />
                   <KPICard
                     title="Total Orders"
                     value={kpiStats?.orders}
-                    isLoading={kpiLoading}
+                    isLoading={dashboardLoading}
                   />
                   <KPICard
                     title="Customers"
                     value={kpiStats?.customers}
-                    isLoading={kpiLoading}
+                    isLoading={dashboardLoading}
                   />
                   <KPICard
                     title="Avg Order Value"
                     value={kpiStats?.avgOrderValue}
-                    isLoading={kpiLoading}
+                    isLoading={dashboardLoading}
                     prefix="৳"
                     formatter={(val) => val?.toFixed(2)}
                   />
@@ -198,7 +183,7 @@ function Dashboard() {
                   {salesTrendsData && salesTrendsData.labels && salesTrendsData.labels.length > 0 && (
                     <ChartCard
                       title="Sales Trends"
-                      isLoading={trendsLoading}
+                      isLoading={dashboardLoading}
                       colSpan="col-span-full lg:col-span-8"
                     >
                       <LineChart01 data={salesTrendsData} width={800} height={256} />

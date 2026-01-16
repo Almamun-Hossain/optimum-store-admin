@@ -126,7 +126,7 @@ const OrderTable = ({ orders, onView, onUpdateStatus, isLoading }) => {
                         <FiEye className="w-5 h-5" />
                       </button>
                     </PermissionGuard>
-                    <PermissionGuard permission="orders.update">
+                    <PermissionGuard permission="orders.update_status">
                       <button
                         onClick={() => onUpdateStatus(order)}
                         className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
