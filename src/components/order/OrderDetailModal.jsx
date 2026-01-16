@@ -1,7 +1,8 @@
 import React from "react";
 import GlobalModal from "../GlobalModal";
+import PermissionGuard from "../PermissionGuard";
 
-const OrderDetailModal = ({ order, isOpen, onClose }) => {
+const OrderDetailModal = ({ order, isOpen, onClose, onUpdateStatus }) => {
   if (!order) return null;
 
   return (
@@ -13,9 +14,9 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
     >
       <div className="space-y-6">
         {/* Order Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Order Information
             </h3>
             <div className="space-y-2">
@@ -77,7 +78,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Payment Information
             </h3>
             <div className="space-y-2">
@@ -104,7 +105,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
         {/* Customer Information */}
         {order.user && (
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Customer Information
             </h3>
             <div className="space-y-2">
@@ -139,7 +140,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
         {/* Shipping Address */}
         {order.address && (
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Shipping Address
             </h3>
             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -155,26 +156,26 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
         {/* Order Items */}
         {order.items && order.items.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Order Items
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 dark:text-gray-400">
                       Product
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 dark:text-gray-400">
                       SKU
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 dark:text-gray-400">
                       Quantity
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 dark:text-gray-400">
                       Price
                     </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 dark:text-gray-400">
                       Total
                     </th>
                   </tr>
@@ -194,7 +195,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
                         ৳{item.price?.toLocaleString() || "0"}
                       </td>
-                      <td className="px-4 py-2 text-gray-900 dark:text-gray-100 font-medium">
+                      <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
                         ৳{((item.price || 0) * (item.quantity || 0)).toLocaleString()}
                       </td>
                     </tr>
@@ -206,9 +207,9 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
         )}
 
         {/* Order Summary */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex justify-end">
-            <div className="w-full max-w-xs space-y-2">
+            <div className="space-y-2 w-full max-w-xs">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
                 <span className="text-gray-900 dark:text-gray-100">
@@ -243,7 +244,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-base font-bold border-t border-gray-200 dark:border-gray-700 pt-2">
+              <div className="flex justify-between pt-2 text-base font-bold border-t border-gray-200 dark:border-gray-700">
                 <span className="text-gray-900 dark:text-gray-100">Total:</span>
                 <span className="text-gray-900 dark:text-gray-100">
                   ৳{order.total?.toLocaleString() || "0"}
@@ -255,7 +256,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
 
         {order.deliveryNotes && (
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
               Delivery Notes
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -264,13 +265,25 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
           </div>
         )}
 
-        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClose}
-            className="btn bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            className="text-gray-700 bg-gray-100 btn dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
           >
             Close
           </button>
+          <PermissionGuard permission="orders.update_status">
+            <button
+              onClick={() => {
+                if (onUpdateStatus) {
+                  onUpdateStatus(order);
+                }
+              }}
+              className="text-white bg-violet-500 btn hover:bg-violet-600"
+            >
+              Update Status
+            </button>
+          </PermissionGuard>
         </div>
       </div>
     </GlobalModal>

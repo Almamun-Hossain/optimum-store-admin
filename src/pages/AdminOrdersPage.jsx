@@ -168,13 +168,13 @@ function AdminOrdersPage() {
   if (ordersError) {
     return (
       <ToasterWrapper>
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex overflow-hidden h-screen">
           <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-          <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="flex overflow-y-auto overflow-x-hidden relative flex-col flex-1">
             <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             <main className="grow">
-              <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-                <div className="text-center py-8">
+              <div className="px-4 py-8 mx-auto w-full sm:px-6 lg:px-8 max-w-9xl">
+                <div className="py-8 text-center">
                   <p className="text-red-600 dark:text-red-400">
                     Error loading orders. Please try again.
                   </p>
@@ -189,14 +189,14 @@ function AdminOrdersPage() {
 
   return (
     <ToasterWrapper>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex overflow-hidden h-screen">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex overflow-y-auto overflow-x-hidden relative flex-col flex-1">
           <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
           <main className="grow">
-            <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+            <div className="px-4 py-8 mx-auto w-full sm:px-6 lg:px-8 max-w-9xl">
               <div className="mb-8">
-                <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
+                <h1 className="text-2xl font-bold text-gray-800 md:text-3xl dark:text-gray-100">
                   Orders Management
                 </h1>
               </div>
@@ -246,6 +246,11 @@ function AdminOrdersPage() {
                 onClose={() => {
                   setIsDetailModalOpen(false);
                   setSelectedOrder(null);
+                }}
+                onUpdateStatus={(order) => {
+                  setIsDetailModalOpen(false);
+                  setSelectedOrder(order);
+                  setIsStatusModalOpen(true);
                 }}
               />
 
