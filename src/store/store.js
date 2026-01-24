@@ -13,6 +13,7 @@ import { paymentsApi } from "./apis/paymentsApi";
 import { preordersApi } from "./apis/preordersApi";
 import { dashboardApi } from "./apis/dashboardApi";
 import { auditLogsApi } from "./apis/auditLogsApi";
+import { heroSliderApi } from "./apis/heroSliderApi";
 import authReducer from "./slices/authSlice";
 import categoryReducer from "./slices/categorySlice";
 
@@ -34,6 +35,7 @@ export const store = configureStore({
     [preordersApi.reducerPath]: preordersApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [auditLogsApi.reducerPath]: auditLogsApi.reducer,
+    [heroSliderApi.reducerPath]: heroSliderApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -50,6 +52,7 @@ export const store = configureStore({
       paymentsApi.middleware,
       preordersApi.middleware,
       dashboardApi.middleware,
-      auditLogsApi.middleware
+      auditLogsApi.middleware,
+      heroSliderApi.middleware
     ),
 });

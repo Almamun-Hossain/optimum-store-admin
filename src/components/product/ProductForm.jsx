@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-hot-toast";
@@ -9,6 +9,7 @@ import useCategory from "../../hooks/useCategory";
 import { FaPlusCircle, FaTrash, FaInfoCircle } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import VariantAttributes from "./VariantAttributes";
+import TiptapEditor from "../shared/TiptapEditor";
 
 const productSchema = z.object({
   categoryId: z.number().min(1, "Category is required"),
@@ -16,7 +17,7 @@ const productSchema = z.object({
   description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
   brand: z.string().max(100, "Brand must be less than 100 characters").optional(),
   skuPrefix: z.string().min(1, "SKU Prefix is required").max(50, "SKU Prefix must be less than 50 characters"),
-  specifications: z.string().max(2000, "Specifications must be less than 2000 characters").optional(),
+  specifications: z.string().max(100000, "Specifications must be less than 100000 characters").optional(),
   isActive: z.boolean().default(true),
   variants: z
     .array(
@@ -25,11 +26,10 @@ const productSchema = z.object({
           id: z.number().optional(),
           sku: z.string().min(1, "SKU is required").max(100, "SKU must be less than 100 characters"),
           basePrice: z.number().min(0.01, "Base Price must be greater than 0"),
-          salePrice: z
-            .number()
-            .min(0, "Sale Price must be 0 or greater")
-            .optional()
-            .nullable(),
+          salePrice: z.preprocess(
+            (val) => (val === null || val === "" || (typeof val === "number" && isNaN(val)) ? null : val),
+            z.number().min(0, "Sale Price must be 0 or greater").nullable().optional()
+          ),
           isActive: z.boolean().default(true),
           weight: z.preprocess(
             (val) => (val === null || val === "" || (typeof val === "number" && isNaN(val)) ? undefined : val),
@@ -213,11 +213,11 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit, onFormError)}
-      className="w-full mx-auto space-y-6 h-full px-1"
+      className="px-1 mx-auto space-y-6 w-full h-full"
     >
       {/* Error Alert */}
       {submitError && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+        <div className="flex gap-3 items-start p-4 bg-red-50 rounded-lg border border-red-200 dark:bg-red-900/20 dark:border-red-800">
           <FaInfoCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-red-800 dark:text-red-300">
@@ -229,19 +229,19 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
             onClick={() => setSubmitError(null)}
             className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
           >
-            <IoClose className="h-5 w-5" />
+            <IoClose className="w-5 h-5" />
           </button>
         </div>
       )}
 
       {/* Basic Information Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+      <div className="p-6 space-y-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <h3 className="pb-2 text-lg font-semibold text-gray-900 border-b border-gray-200 dark:text-gray-100 dark:border-gray-700">
           Basic Information
         </h3>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
             Category <span className="text-red-500">*</span>
           </label>
           <CategorySelect
@@ -258,7 +258,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
             Product Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -279,9 +279,9 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               Brand
             </label>
             <input
@@ -302,7 +302,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               SKU Prefix <span className="text-red-500">*</span>
             </label>
             <input
@@ -325,7 +325,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
             Description
           </label>
           <textarea
@@ -347,19 +347,21 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
             Specifications
           </label>
-          <textarea
-            {...register("specifications")}
-            data-error={!!errors.specifications}
-            className={`form-textarea w-full ${
-              errors.specifications
-                ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                : ""
-            }`}
-            rows="4"
-            placeholder="Enter product specifications"
+          <Controller
+            name="specifications"
+            control={control}
+            render={({ field }) => (
+              <TiptapEditor
+                value={field.value || ""}
+                onChange={field.onChange}
+                placeholder="Enter product specifications"
+                maxLength={100000}
+                hasError={!!errors.specifications}
+              />
+            )}
           />
           {errors.specifications && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -373,11 +375,11 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
             type="checkbox"
             {...register("isActive")}
             id="isActive"
-            className="form-checkbox h-4 w-4"
+            className="w-4 h-4 form-checkbox"
           />
           <label
             htmlFor="isActive"
-            className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+            className="block ml-2 text-sm text-gray-700 dark:text-gray-300"
           >
             Product is active
           </label>
@@ -385,8 +387,8 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
       </div>
 
       {/* Variants Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+      <div className="p-6 space-y-4 bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Product Variants
           </h3>
@@ -400,19 +402,19 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
         {variantFields.map((variant, index) => (
           <div
             key={variant.id}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 bg-gray-50 dark:bg-gray-900/30 space-y-4"
+            className="p-5 space-y-4 bg-gray-50 rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-900/30"
           >
-            <div className="flex items-center justify-between">
-              <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200">
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold text-gray-800 text-md dark:text-gray-200">
                 Variant {index + 1}
               </h4>
-              <div className="flex items-center gap-3">
+              <div className="flex gap-3 items-center">
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     {...register(`variants.${index}.isActive`)}
                     id={`variant-active-${index}`}
-                    className="form-checkbox h-4 w-4"
+                    className="w-4 h-4 form-checkbox"
                   />
                   <label
                     htmlFor={`variant-active-${index}`}
@@ -425,18 +427,18 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                    className="p-2 text-red-600 rounded transition-colors hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     title="Remove variant"
                   >
-                    <FaTrash className="h-4 w-4" />
+                    <FaTrash className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   SKU <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -457,7 +459,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Base Price (৳) <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -482,7 +484,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Sale Price (৳)
                 </label>
                 <input
@@ -508,9 +510,9 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Weight (g)
                 </label>
                 <input
@@ -520,12 +522,12 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                   {...register(`variants.${index}.weight`, {
                     valueAsNumber: true,
                   })}
-                  className="form-input w-full"
+                  className="w-full form-input"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Length (cm)
                 </label>
                 <input
@@ -535,12 +537,12 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                   {...register(`variants.${index}.length`, {
                     valueAsNumber: true,
                   })}
-                  className="form-input w-full"
+                  className="w-full form-input"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Width (cm)
                 </label>
                 <input
@@ -550,12 +552,12 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                   {...register(`variants.${index}.width`, {
                     valueAsNumber: true,
                   })}
-                  className="form-input w-full"
+                  className="w-full form-input"
                   placeholder="0"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Height (cm)
                 </label>
                 <input
@@ -565,7 +567,7 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
                   {...register(`variants.${index}.height`, {
                     valueAsNumber: true,
                   })}
-                  className="form-input w-full"
+                  className="w-full form-input"
                   placeholder="0"
                 />
               </div>
@@ -597,15 +599,15 @@ const ProductForm = ({ product, onClose, onSubmit, isLoading = false }) => {
               attributes: [{ attributeType: "", attributeValue: "" }],
             })
           }
-          className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg shadow-sm hover:bg-violet-700 transition-colors"
+          className="inline-flex gap-2 justify-center items-center px-4 py-2 w-full text-white bg-violet-600 rounded-lg shadow-sm transition-colors md:w-auto hover:bg-violet-700"
         >
-          <FaPlusCircle className="h-4 w-4" />
+          <FaPlusCircle className="w-4 h-4" />
           Add Variant
         </button>
       </div>
 
       {/* Form Actions */}
-      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col gap-3 justify-end pt-4 border-t border-gray-200 sm:flex-row dark:border-gray-700">
         <button
           type="button"
           onClick={onClose}

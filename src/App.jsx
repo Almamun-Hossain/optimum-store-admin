@@ -29,6 +29,7 @@ const PermissionsPage = React.lazy(() => import("./pages/PermissionsPage"));
 const PaymentsPage = React.lazy(() => import("./pages/PaymentsPage"));
 const PreordersPage = React.lazy(() => import("./pages/PreordersPage"));
 const AuditLogsPage = React.lazy(() => import("./pages/AuditLogsPage"));
+const HeroSliderPage = React.lazy(() => import("./pages/HeroSliderPage"));
 
 function App() {
   const location = useLocation();
@@ -165,6 +166,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AuditLogsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/hero-slider"
+              element={
+                <ProtectedRoute>
+                  <HeroSliderPage />
                 </ProtectedRoute>
               }
             />
